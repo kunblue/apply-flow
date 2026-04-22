@@ -1,0 +1,11 @@
+node_modules
+.pnpm-store
+.turbo
+.next
+dist
+coverage
+.git
+.DS_Store
+*.log
+apps/*/node_modules
+apps/*/.next

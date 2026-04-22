@@ -1,0 +1,52 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum ApplicationStatus {
+  DRAFT
+  APPLIED
+  INTERVIEW
+  REJECTED
+  OFFER
+}
+
+enum ReminderState {
+  UNREAD
+  READ
+  IGNORED
+}
+
+model JobApplication {
+  id         String            @id @default(cuid())
+  userId     String
+  user       User              @relation(fields: [userId], references: [id], onDelete: Cascade)
+  company    String
+  position   String
+  status     ApplicationStatus @default(APPLIED)
+  jdText     String
+  source     String
+  resumeText String            @default("")
+  interviewAt DateTime?
+  followUpAt  DateTime?
+  reminderState ReminderState  @default(UNREAD)
+  reminderSnoozedUntil DateTime?
+  aiFeedback String?
+  createdAt  DateTime          @default(now())
+  updatedAt  DateTime          @updatedAt
+
+  @@index([userId])
+}
+
+model User {
+  id           String           @id @default(cuid())
+  email        String           @unique
+  passwordHash String
+  createdAt    DateTime         @default(now())
+  updatedAt    DateTime         @updatedAt
+  jobs         JobApplication[]
+}
