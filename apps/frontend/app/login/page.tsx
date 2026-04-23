@@ -5,6 +5,7 @@ import { FormEvent, useState } from 'react'
 import { useRouter } from 'next/navigation';
 import { ArrowRight, BriefcaseBusiness, Sparkles } from 'lucide-react';
 import { ApiError, apiJson } from '@/lib/api';
+import { setAuthToken } from '@/lib/auth-token';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -14,6 +15,7 @@ type AuthResponse = {
     id: string;
     email: string;
   };
+  token: string;
 };
 
 type Locale = 'zh' | 'en';
@@ -93,7 +95,7 @@ export default function LoginPage() {
     setErrorMessage(null);
 
     try {
-      await apiJson<AuthResponse>('/api/auth/login', {
+      const response = await apiJson<AuthResponse>('/api/auth/login', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -103,6 +105,7 @@ export default function LoginPage() {
           password,
         }),
       });
+      setAuthToken(response.token);
       router.replace('/');
       router.refresh();
     } catch (error) {

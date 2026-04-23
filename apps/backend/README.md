@@ -6,7 +6,7 @@ Apply Flow 后端服务，提供用户鉴权、岗位管理、提醒管理与 AI
 
 - NestJS 11
 - Prisma 6 + PostgreSQL
-- JWT + Cookie 鉴权（`httpOnly`）
+- JWT Bearer Token 鉴权（`Authorization` 请求头）
 - 文件解析：PDF（`pdf-parse`）、DOCX（`mammoth`）
 - AI：Google Gemini（`gemini-2.5-flash`）
 
@@ -21,7 +21,7 @@ cp .env.example .env
 关键变量说明：
 
 - `DATABASE_URL`：PostgreSQL 连接串
-- `FRONTEND_URL`：允许跨域的前端地址（用于 CORS）
+- `FRONTEND_URL`：允许跨域的前端地址（用于 CORS `origin`）
 - `JWT_SECRET`：JWT 签名密钥
 - `GEMINI_API_KEY`：AI 分析能力所需密钥（可选，不配置则 AI 接口报错）
 
@@ -57,10 +57,10 @@ pnpm --filter backend test:e2e
 
 鉴权（`/api/auth`）：
 
-- `POST /register`：注册并写入认证 Cookie
-- `POST /login`：登录并写入认证 Cookie
-- `POST /logout`：清除认证 Cookie
-- `GET /me`：获取当前登录用户（需鉴权）
+- `POST /register`：注册并返回 Bearer Token
+- `POST /login`：登录并返回 Bearer Token
+- `POST /logout`：前端清理本地 Token（服务端返回成功）
+- `GET /me`：获取当前登录用户（需携带 `Authorization: Bearer <token>`）
 
 岗位（`/api/jobs`，全部需鉴权）：
 

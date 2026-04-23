@@ -59,7 +59,8 @@ pnpm lint
 ## API Convention
 
 - Use `lib/api.ts` as the unified request layer
-- Requests include `credentials: 'include'` for cookie-based auth
+- Store token in `localStorage` after login/register
+- Requests automatically include `Authorization: Bearer <token>`
 - Business errors throw `ApiError` and are handled by status code at page level
 
 ## Main Pages

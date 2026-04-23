@@ -49,6 +49,7 @@ import {
 import { Input } from '@/components/ui/input';
 import { Progress } from '@/components/ui/progress';
 import { ApiError, apiFetch, apiJson } from '@/lib/api';
+import { clearAuthToken } from '@/lib/auth-token';
 import { cn } from '@/lib/utils';
 
 type ApplicationStatus = 'DRAFT' | 'APPLIED' | 'INTERVIEW' | 'REJECTED' | 'OFFER';
@@ -924,6 +925,7 @@ export function JobBoard({ initialJobs }: Readonly<JobBoardProps>) {
   };
 
   const handleUnauthorized = () => {
+    clearAuthToken();
     setIsAuthChecking(false);
     setCurrentUser(null);
     setJobs([]);
@@ -985,10 +987,7 @@ export function JobBoard({ initialJobs }: Readonly<JobBoardProps>) {
         }
 
         if (jobsResponse.status === 401) {
-          setCurrentUser(null);
-          setJobs([]);
-          setErrorMessage(copy.authRequiredHint);
-          router.replace('/login');
+          handleUnauthorized();
           return;
         }
 
@@ -1003,10 +1002,7 @@ export function JobBoard({ initialJobs }: Readonly<JobBoardProps>) {
         if (error instanceof ApiError && error.status !== 401) {
           setErrorMessage(copy.fetchJobsError);
         } else {
-          setCurrentUser(null);
-          setJobs([]);
-          setErrorMessage(copy.authRequiredHint);
-          router.replace('/login');
+          handleUnauthorized();
         }
       } finally {
         if (isMounted) {
@@ -1583,6 +1579,7 @@ export function JobBoard({ initialJobs }: Readonly<JobBoardProps>) {
     } catch (error) {
       console.error(error);
     } finally {
+      clearAuthToken();
       setCurrentUser(null);
       setJobs([]);
       router.replace('/login');

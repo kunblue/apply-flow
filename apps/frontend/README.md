@@ -59,7 +59,8 @@ pnpm lint
 ## API 调用约定
 
 - 统一通过 `lib/api.ts` 调用后端
-- 默认 `credentials: 'include'`，使用 Cookie 维持登录态
+- 登录/注册成功后，将 Token 存入 `localStorage`
+- 请求会自动附带 `Authorization: Bearer <token>`
 - 业务错误会抛出 `ApiError`，页面可按状态码做提示
 
 ## 主要页面能力

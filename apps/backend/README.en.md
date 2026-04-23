@@ -6,7 +6,7 @@ This service powers Apply Flow backend APIs, including authentication, job manag
 
 - NestJS 11
 - Prisma 6 + PostgreSQL
-- JWT + Cookie auth (`httpOnly`)
+- JWT Bearer token auth (`Authorization` header)
 - File parsing: PDF (`pdf-parse`) and DOCX (`mammoth`)
 - AI: Google Gemini (`gemini-2.5-flash`)
 
@@ -21,7 +21,7 @@ cp .env.example .env
 Key variables:
 
 - `DATABASE_URL`: PostgreSQL connection string
-- `FRONTEND_URL`: allowed frontend origin for CORS
+- `FRONTEND_URL`: allowed frontend origin for CORS `origin`
 - `JWT_SECRET`: JWT signing key
 - `GEMINI_API_KEY`: required for AI analysis endpoint
 
@@ -57,10 +57,10 @@ Health/basic route:
 
 Auth routes (`/api/auth`):
 
-- `POST /register`: create user and set auth cookie
-- `POST /login`: login and set auth cookie
-- `POST /logout`: clear auth cookie
-- `GET /me`: get current user (auth required)
+- `POST /register`: create user and return bearer token
+- `POST /login`: login and return bearer token
+- `POST /logout`: frontend clears local token (server returns success)
+- `GET /me`: get current user (requires `Authorization: Bearer <token>`)
 
 Job routes (`/api/jobs`, all require auth):
 

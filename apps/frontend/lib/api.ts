@@ -1,3 +1,5 @@
+import { getAuthToken } from './auth-token';
+
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL ?? 'http://localhost:3001';
 
 export class ApiError extends Error {
@@ -15,12 +17,15 @@ type ApiFetchInit = RequestInit & {
 
 export async function apiFetch(path: string, init: ApiFetchInit = {}): Promise<Response> {
   const { headers, ...rest } = init;
+  const authToken = getAuthToken();
+  const normalizedHeaders = new Headers(headers ?? {});
+  if (authToken && !normalizedHeaders.has('Authorization')) {
+    normalizedHeaders.set('Authorization', `Bearer ${authToken}`);
+  }
+
   const response = await fetch(`${API_BASE_URL}${path}`, {
-    credentials: 'include',
     ...rest,
-    headers: {
-      ...(headers ?? {}),
-    },
+    headers: normalizedHeaders,
   });
 
   return response;
