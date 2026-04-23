@@ -18,6 +18,8 @@ RUN pnpm install --frozen-lockfile
 # 再复制前端代码并构建
 COPY apps/frontend ./apps/frontend
 WORKDIR /app/apps/frontend
+ARG NEXT_PUBLIC_API_BASE_URL
+ENV NEXT_PUBLIC_API_BASE_URL=$NEXT_PUBLIC_API_BASE_URL
 RUN pnpm build
 
 EXPOSE 3000
