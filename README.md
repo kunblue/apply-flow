@@ -117,6 +117,13 @@ pnpm format
 - Reminder management: mark read, ignore, snooze, bulk mark read
 - Language support: Chinese / English UI switching
 
+## Areas for Improvement
+
+- Integrate with major resume/job platforms to fetch each user's submitted applications.
+- Let users choose their preferred AI model, with support for multiple model providers.
+- Add OCR support for image-based and scanned PDF resumes.
+- Add email verification codes for login and notifications for new incoming emails.
+
 ## More Docs
 
 - Frontend docs: `apps/frontend/README.en.md`
