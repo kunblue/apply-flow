@@ -1,51 +1,51 @@
 # Apply Flow
 
-Apply Flow 是一个 AI 驱动的求职管理看板（Monorepo），支持账号登录、岗位投递进度管理、面试/跟进提醒，以及基于 JD 与简历文本的 AI 匹配分析。
+Apply Flow is an AI-powered job search dashboard in a monorepo setup. It supports account-based authentication, application tracking, reminder workflows, and AI analysis based on JD + resume text.
 
-## 技术栈
+## Tech Stack
 
-- 前端：Next.js 16、React 19、Tailwind CSS 4、dnd-kit、shadcn/ui
-- 后端：NestJS 11、Prisma 6、JWT（Cookie 鉴权）
-- 数据库：PostgreSQL 16
-- AI：Google Gemini（`gemini-2.5-flash`）
-- 工程化：pnpm workspace、Turborepo、ESLint、Prettier、Docker Compose
+- Frontend: Next.js 16, React 19, Tailwind CSS 4, dnd-kit, shadcn/ui
+- Backend: NestJS 11, Prisma 6, JWT (Cookie auth)
+- Database: PostgreSQL 16
+- AI: Google Gemini (`gemini-2.5-flash`)
+- Tooling: pnpm workspace, Turborepo, ESLint, Prettier, Docker Compose
 
-## 仓库结构
+## Repository Structure
 
 ```text
 .
 ├─ apps/
-│  ├─ frontend/     # Next.js 前端应用
-│  └─ backend/      # NestJS 后端应用
-├─ packages/        # 共享配置与组件
+│  ├─ frontend/     # Next.js frontend app
+│  └─ backend/      # NestJS backend app
+├─ packages/        # Shared configs/components
 ├─ prisma/          # Prisma schema
 ├─ docker-compose.yml
 └─ turbo.json
 ```
 
-## 快速启动（推荐：Docker）
+## Quick Start (Recommended: Docker)
 
-### 1) 准备环境变量
+### 1) Prepare environment variables
 
 ```sh
 cp .env.example .env
 ```
 
-可选：在根目录 `.env` 中填写 `GEMINI_API_KEY` 启用 AI 分析能力。
+Optionally set `GEMINI_API_KEY` in root `.env` to enable AI analysis.
 
-### 2) 一键启动
+### 2) Start all services
 
 ```sh
 pnpm docker:up
 ```
 
-### 3) 访问服务
+### 3) Service URLs
 
-- 前端：`http://localhost:3000`
-- 后端：`http://localhost:3001`
-- PostgreSQL：`localhost:5432`
+- Frontend: `http://localhost:3000`
+- Backend: `http://localhost:3001`
+- PostgreSQL: `localhost:5432`
 
-### 4) 常用命令
+### 4) Useful commands
 
 ```sh
 pnpm docker:logs
@@ -53,52 +53,52 @@ pnpm docker:down
 pnpm docker:build
 ```
 
-## 本地开发（非 Docker）
+## Local Development (Without Docker for app runtime)
 
-### 1) 安装依赖
+### 1) Install dependencies
 
 ```sh
 pnpm install
 ```
 
-### 2) 启动数据库（任选其一）
+### 2) Start database (choose one)
 
-- 使用 Docker 仅启动 DB：
+- Start only DB via Docker:
 
 ```sh
 docker compose up -d db
 ```
 
-- 或自行准备本地 PostgreSQL，并保证连接串可用。
+- Or use your own local PostgreSQL instance.
 
-### 3) 准备后端环境变量
+### 3) Prepare backend env file
 
 ```sh
 cp apps/backend/.env.example apps/backend/.env
 ```
 
-按实际环境修改 `DATABASE_URL`、`FRONTEND_URL`、`JWT_SECRET`、`GEMINI_API_KEY`。
+Update `DATABASE_URL`, `FRONTEND_URL`, `JWT_SECRET`, and `GEMINI_API_KEY` as needed.
 
-### 4) 同步 Prisma
+### 4) Sync Prisma
 
 ```sh
 pnpm --filter backend prisma:generate
 pnpm --filter backend prisma:push
 ```
 
-### 5) 启动前后端
+### 5) Start frontend and backend
 
-在仓库根目录执行：
+Run from repo root:
 
 ```sh
 pnpm dev
 ```
 
-默认端口：
-- 前端：`3000`
-- 后端：`3001`
+Default ports:
+- Frontend: `3000`
+- Backend: `3001`
 
-## 常用脚本
+## Common Scripts
 
 ```sh
 pnpm dev
@@ -108,22 +108,16 @@ pnpm check-types
 pnpm format
 ```
 
-## 核心功能
+## Core Features
 
-- 账号系统：注册、登录、登出、获取当前用户
-- 岗位看板：增删改查、状态流转（DRAFT/APPLIED/INTERVIEW/REJECTED/OFFER）
-- 简历处理：支持 PDF 与 DOCX 提取文本（不支持旧版 `.doc`）
-- AI 分析：输出结构化 JSON（匹配度、简历评分、优化建议、自我介绍模板）
-- 提醒管理：标记已读、忽略、稍后提醒、批量标记已读
-- 多语言体验：前端界面支持中英文切换
+- Auth system: register, login, logout, get current user
+- Job board: CRUD + status flow (`DRAFT`/`APPLIED`/`INTERVIEW`/`REJECTED`/`OFFER`)
+- Resume processing: parse PDF and DOCX text (`.doc` is not supported)
+- AI analysis: structured JSON output (match score, resume score, improvements, intro template)
+- Reminder management: mark read, ignore, snooze, bulk mark read
+- Language support: Chinese / English UI switching
 
-## 待优化点
-- 接入各简历平台，爬取当前用户的投递简历信息
-- AI模型支持自己选，接入多平台的模型
-- 接入OCR支持图片PDF
-- 登录验证邮件验证码，通知新增邮件
+## More Docs
 
-## 更多文档
-
-- 前端文档：`apps/frontend/README.md`
-- 后端文档：`apps/backend/README.md`
+- Frontend docs: `apps/frontend/README.en.md`
+- Backend docs: `apps/backend/README.en.md`
