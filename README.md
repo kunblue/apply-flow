@@ -132,7 +132,7 @@ flowchart TB
 
 | AI Analysis |
 | --- |
-| ![AI Analysis / AI分析](docs/screenshots/aI_analyze.png) |
+| ![AI Analysis / AI分析](docs/screenshots/ai_analyze.png) |
 
 ## Quick Start (Recommended: Docker)
 
@@ -168,7 +168,7 @@ pnpm docker:down
 pnpm docker:build
 ```
 
-## Local Development (Without Docker for app runtime)
+## Local Development
 
 ### 1) Install dependencies
 
@@ -176,7 +176,7 @@ pnpm docker:build
 pnpm install
 ```
 
-### 2) Start database (choose one)
+### 2) Start databases
 
 - Start DB + Redis via Docker:
 
@@ -206,7 +206,7 @@ pnpm --filter backend prisma:push
 Run from repo root:
 
 ```sh
-pnpm dev
+docker compose up -d frontend backend
 ```
 
 Default ports:
@@ -228,7 +228,7 @@ pnpm format
 - Auth system: register/login/logout/me with 6-digit email verification code
 - Password recovery: forgot password (send code) + reset password
 - Password management: authenticated user change password (send code + submit code)
-- Job board: CRUD + status flow (`DRAFT`/`APPLIED`/`INTERVIEW`/`REJECTED`/`OFFER`)
+- Job board: CRUD + status flow (`APPLIED`/`INTERVIEW`/`REJECTED`/`OFFER`)
 - Resume processing: parse PDF and DOCX text (`.doc` is not supported)
 - AI analysis: structured JSON output (match score, resume score, improvements, intro template)
 - Reminder management: mark read, ignore, snooze, bulk mark read
