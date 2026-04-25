@@ -25,6 +25,7 @@ import {
   CircleX,
   ClockAlert,
   FileClock,
+  KeyRound,
   LogOut,
   Plus,
   Rocket,
@@ -139,6 +140,7 @@ const LOCALE_COPY = {
     authRequiredHint: '登录状态已失效，请重新登录。',
     loadingJobs: '正在加载你的职位数据...',
     logout: '退出登录',
+    changePassword: '修改密码',
     interviewCalendarTitle: '面试日历',
     interviewCalendarHint: '近期面试安排一目了然',
     noInterviewScheduled: '暂无已安排面试',
@@ -249,6 +251,7 @@ const LOCALE_COPY = {
     authRequiredHint: 'Your session has expired. Please sign in again.',
     loadingJobs: 'Loading your jobs...',
     logout: 'Logout',
+    changePassword: 'Change Password',
     interviewCalendarTitle: 'Interview Calendar',
     interviewCalendarHint: 'Your upcoming interviews in one place',
     noInterviewScheduled: 'No interviews scheduled yet',
@@ -1760,6 +1763,14 @@ export function JobBoard({ initialJobs }: Readonly<JobBoardProps>) {
                 </div>
               ) : null}
             </div>
+            <Button
+              variant="outline"
+              onClick={() => router.push('/change-password')}
+              className="h-9 rounded-lg px-3 text-sm"
+            >
+              <KeyRound className="size-4" />
+              {copy.changePassword}
+            </Button>
             <Button
               variant="outline"
               onClick={() => void handleLogout()}

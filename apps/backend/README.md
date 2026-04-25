@@ -57,9 +57,14 @@ pnpm --filter backend test:e2e
 
 鉴权（`/api/auth`）：
 
-- `POST /register`：注册并返回 Bearer Token
+- `POST /register/send-code`：发送注册验证码
+- `POST /register`：校验验证码后注册并返回 Bearer Token
 - `POST /login`：登录并返回 Bearer Token
 - `POST /logout`：前端清理本地 Token（服务端返回成功）
+- `POST /password/forgot/send-code`：发送“忘记密码”验证码
+- `POST /password/reset`：使用验证码重置密码
+- `POST /password/change/send-code`：登录态发送“修改密码”验证码
+- `POST /password/change`：登录态校验验证码后修改密码
 - `GET /me`：获取当前登录用户（需携带 `Authorization: Bearer <token>`）
 
 岗位（`/api/jobs`，全部需鉴权）：

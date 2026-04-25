@@ -57,9 +57,14 @@ Health/basic route:
 
 Auth routes (`/api/auth`):
 
-- `POST /register`: create user and return bearer token
+- `POST /register/send-code`: send email verification code for registration
+- `POST /register`: verify code, create user, and return bearer token
 - `POST /login`: login and return bearer token
 - `POST /logout`: frontend clears local token (server returns success)
+- `POST /password/forgot/send-code`: send verification code for password reset
+- `POST /password/reset`: reset password with verification code
+- `POST /password/change/send-code`: send verification code for authenticated password change
+- `POST /password/change`: change password with verification code (authenticated)
 - `GET /me`: get current user (requires `Authorization: Bearer <token>`)
 
 Job routes (`/api/jobs`, all require auth):

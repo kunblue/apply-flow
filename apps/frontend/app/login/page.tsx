@@ -34,6 +34,7 @@ const LOCALE_COPY = {
     loginFailed: '登录失败，请稍后重试。',
     signingIn: '登录中...',
     signIn: '登录',
+    forgotPassword: '忘记密码？',
     noAccountYet: '还没有账号？',
     createOne: '去注册',
   },
@@ -51,6 +52,7 @@ const LOCALE_COPY = {
     loginFailed: 'Login failed. Please try again.',
     signingIn: 'Signing in...',
     signIn: 'Sign In',
+    forgotPassword: 'Forgot password?',
     noAccountYet: 'No account yet?',
     createOne: 'Create one',
   },
@@ -219,6 +221,11 @@ export default function LoginPage() {
                 <ArrowRight className="size-4" />
               </Button>
             </form>
+            <p className="mt-3 text-sm text-slate-600">
+              <Link href="/forgot-password" className="font-medium text-sky-700 hover:text-sky-600">
+                {copy.forgotPassword}
+              </Link>
+            </p>
             <p className="mt-5 text-sm text-slate-600">
               {copy.noAccountYet}{' '}
               <Link href="/register" className="font-medium text-sky-700 hover:text-sky-600">

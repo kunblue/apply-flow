@@ -67,6 +67,8 @@ pnpm lint
 
 - `/login`: email/password login with locale switch
 - `/register`: email/password registration (with password length guard)
+- `/forgot-password`: send verification code and reset password
+- `/change-password`: send verification code and change password in authenticated session
 - `/`: job board with CRUD/reminders/AI analysis interactions
 
 ## Development Notes

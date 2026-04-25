@@ -30,9 +30,18 @@ const LOCALE_COPY = {
     email: '邮箱',
     password: '密码',
     confirmPassword: '确认密码',
+    verificationCode: '邮箱验证码',
     passwordPlaceholder: '至少 8 位字符',
     confirmPasswordPlaceholder: '请再次输入密码',
+    verificationCodePlaceholder: '输入 6 位验证码',
+    sendCode: '发送验证码',
+    sendingCode: '发送中...',
+    sendCodeNeedEmail: '请先输入邮箱。',
+    sendCodeSuccess: '验证码已发送，请注意查收（开发环境请看后端日志）。',
+    sendCodeFailedEmailUsed: '发送失败，该邮箱可能已被注册。',
+    sendCodeFailed: '验证码发送失败，请稍后重试。',
     passwordMismatch: '两次输入的密码不一致。',
+    registerFailedInvalidCode: '注册失败，验证码错误或已过期。',
     registerFailedEmailUsed: '注册失败，邮箱可能已被占用。',
     registerFailed: '注册失败，请稍后重试。',
     creatingAccount: '创建中...',
@@ -49,9 +58,18 @@ const LOCALE_COPY = {
     email: 'Email',
     password: 'Password',
     confirmPassword: 'Confirm Password',
+    verificationCode: 'Email Verification Code',
     passwordPlaceholder: 'At least 8 characters',
     confirmPasswordPlaceholder: 'Repeat your password',
+    verificationCodePlaceholder: 'Enter 6-digit code',
+    sendCode: 'Send Code',
+    sendingCode: 'Sending...',
+    sendCodeNeedEmail: 'Please enter your email first.',
+    sendCodeSuccess: 'Code sent. Check your inbox (or backend logs in local dev).',
+    sendCodeFailedEmailUsed: 'Failed to send code. This email may already be registered.',
+    sendCodeFailed: 'Failed to send verification code. Please try again.',
     passwordMismatch: 'Passwords do not match.',
+    registerFailedInvalidCode: 'Registration failed. Verification code is invalid or expired.',
     registerFailedEmailUsed: 'Registration failed. Email may already be in use.',
     registerFailed: 'Registration failed. Please try again.',
     creatingAccount: 'Creating account...',
@@ -81,7 +99,10 @@ export default function RegisterPage() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
+  const [verificationCode, setVerificationCode] = useState('');
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [successMessage, setSuccessMessage] = useState<string | null>(null);
+  const [isSendingCode, setIsSendingCode] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const copy = LOCALE_COPY[locale];
 
@@ -97,6 +118,7 @@ export default function RegisterPage() {
   const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     setErrorMessage(null);
+    setSuccessMessage(null);
 
     if (password !== confirmPassword) {
       setErrorMessage(copy.passwordMismatch);
@@ -113,6 +135,7 @@ export default function RegisterPage() {
         body: JSON.stringify({
           email,
           password,
+          verificationCode,
         }),
       });
       setAuthToken(response.token);
@@ -120,12 +143,48 @@ export default function RegisterPage() {
       router.refresh();
     } catch (error) {
       if (error instanceof ApiError && error.status === 400) {
-        setErrorMessage(copy.registerFailedEmailUsed);
+        if (error.message.toLowerCase().includes('verification code')) {
+          setErrorMessage(copy.registerFailedInvalidCode);
+        } else {
+          setErrorMessage(copy.registerFailedEmailUsed);
+        }
       } else {
         setErrorMessage(copy.registerFailed);
       }
     } finally {
       setIsSubmitting(false);
+    }
+  };
+
+  const handleSendCode = async () => {
+    const normalizedEmail = email.trim();
+    if (!normalizedEmail) {
+      setErrorMessage(copy.sendCodeNeedEmail);
+      return;
+    }
+
+    setErrorMessage(null);
+    setSuccessMessage(null);
+    setIsSendingCode(true);
+    try {
+      await apiJson<{ success: true }>('/api/auth/register/send-code', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          email: normalizedEmail,
+        }),
+      });
+      setSuccessMessage(copy.sendCodeSuccess);
+    } catch (error) {
+      if (error instanceof ApiError && error.status === 400) {
+        setErrorMessage(copy.sendCodeFailedEmailUsed);
+      } else {
+        setErrorMessage(copy.sendCodeFailed);
+      }
+    } finally {
+      setIsSendingCode(false);
     }
   };
 
@@ -197,6 +256,36 @@ export default function RegisterPage() {
               </div>
               <div className="space-y-1.5">
                 <label
+                  htmlFor="verification-code"
+                  className="text-xs font-medium tracking-wide text-slate-500 uppercase"
+                >
+                  {copy.verificationCode}
+                </label>
+                <div className="flex items-center gap-2">
+                  <Input
+                    id="verification-code"
+                    type="text"
+                    inputMode="numeric"
+                    maxLength={6}
+                    autoComplete="one-time-code"
+                    value={verificationCode}
+                    onChange={(event) => setVerificationCode(event.target.value.replaceAll(/\D/g, ''))}
+                    placeholder={copy.verificationCodePlaceholder}
+                    className="h-11 border-slate-200 bg-white transition focus-visible:ring-sky-400"
+                    required
+                  />
+                  <Button
+                    type="button"
+                    disabled={isSendingCode}
+                    onClick={handleSendCode}
+                    className="h-11 shrink-0 bg-slate-900 px-4 text-white transition hover:bg-slate-800"
+                  >
+                    {isSendingCode ? copy.sendingCode : copy.sendCode}
+                  </Button>
+                </div>
+              </div>
+              <div className="space-y-1.5">
+                <label
                   htmlFor="password"
                   className="text-xs font-medium tracking-wide text-slate-500 uppercase"
                 >
@@ -236,6 +325,11 @@ export default function RegisterPage() {
               {errorMessage ? (
                 <p className="rounded-md border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">
                   {errorMessage}
+                </p>
+              ) : null}
+              {successMessage ? (
+                <p className="rounded-md border border-emerald-200 bg-emerald-50 px-3 py-2 text-sm text-emerald-700">
+                  {successMessage}
                 </p>
               ) : null}
               <Button
