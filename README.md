@@ -122,16 +122,17 @@ flowchart TB
 
 ### Screenshot Paths / 截图路径
 
-> Add actual screenshots to the paths below and they will render automatically.  
-> 将真实截图放入以下路径后，本节会自动渲染图片。
+| Auth | Dashboard |
+| --- | --- |
+| ![Login / 登录页](docs/screenshots/login.png) | ![Dashboard / 仪表盘](docs/screenshots/dashboard.png) |
 
-```md
-![Login / 登录页](docs/screenshots/login.png)
-![Dashboard / 仪表盘](docs/screenshots/dashboard.png)
-![Job Board / 职位看板](docs/screenshots/job-board.png)
-![Job Detail / 职位详情](docs/screenshots/job-detail.png)
-![Reminder Center / 提醒中心](docs/screenshots/reminder-center.png)
-```
+| Job Board | Add Job |
+| --- | --- |
+| ![Job Board / 职位看板](docs/screenshots/job-board.png) | ![Add Job / 添加职位](docs/screenshots/add-job.png) |
+
+| AI Analysis |
+| --- |
+| ![AI Analysis / AI分析](docs/screenshots/aI_analyze.png) |
 
 ## Quick Start (Recommended: Docker)
 
@@ -143,7 +144,7 @@ cp .env.example .env
 
 Set root `.env` for:
 
-- `SMTP_*` to enable verification code emails (Gmail + App Password recommended)
+- `SMTP_*` to enable verification code emails
 - `GEMINI_API_KEY` optionally for AI analysis
 
 ### 2) Start all services
