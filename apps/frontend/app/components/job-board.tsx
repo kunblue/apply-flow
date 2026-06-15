@@ -1,4 +1,4 @@
-'use client';
+"use client";
 
 import {
   DndContext,
@@ -10,11 +10,23 @@ import {
   useDroppable,
   useSensor,
   useSensors,
-} from '@dnd-kit/core';
-import { SortableContext, useSortable, verticalListSortingStrategy } from '@dnd-kit/sortable';
-import { CSS } from '@dnd-kit/utilities';
-import { type CSSProperties, type ReactNode, useEffect, useMemo, useRef, useState } from 'react';
-import { useRouter } from 'next/navigation';
+} from "@dnd-kit/core";
+import {
+  SortableContext,
+  useSortable,
+  verticalListSortingStrategy,
+} from "@dnd-kit/sortable";
+import { CSS } from "@dnd-kit/utilities";
+import {
+  type CSSProperties,
+  type ReactNode,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
+import { createPortal } from "react-dom";
+import { useRouter } from "next/navigation";
 import {
   Activity,
   Bell,
@@ -34,11 +46,11 @@ import {
   Trophy,
   X,
   type LucideIcon,
-} from 'lucide-react';
-import { JobForm } from './job-form';
-import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
-import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
+} from "lucide-react";
+import { JobForm } from "./job-form";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import {
   Card,
   CardContent,
@@ -46,18 +58,26 @@ import {
   CardFooter,
   CardHeader,
   CardTitle,
-} from '@/components/ui/card';
-import { Input } from '@/components/ui/input';
-import { Progress } from '@/components/ui/progress';
-import { ApiError, apiFetch, apiJson } from '@/lib/api';
-import { clearAuthToken } from '@/lib/auth-token';
-import { cn } from '@/lib/utils';
+} from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Progress } from "@/components/ui/progress";
+import { ApiError, apiFetch, apiJson } from "@/lib/api";
+import { clearAuthToken } from "@/lib/auth-token";
+import { cn } from "@/lib/utils";
 
-type ApplicationStatus = 'DRAFT' | 'APPLIED' | 'INTERVIEW' | 'REJECTED' | 'OFFER';
-type BoardColumnKey = Extract<ApplicationStatus, 'APPLIED' | 'INTERVIEW' | 'REJECTED' | 'OFFER'>;
-type Locale = 'zh' | 'en';
-type ReminderState = 'UNREAD' | 'READ' | 'IGNORED';
-type NotificationFilter = 'all' | 'unread' | 'overdue';
+type ApplicationStatus =
+  | "DRAFT"
+  | "APPLIED"
+  | "INTERVIEW"
+  | "REJECTED"
+  | "OFFER";
+type BoardColumnKey = Extract<
+  ApplicationStatus,
+  "APPLIED" | "INTERVIEW" | "REJECTED" | "OFFER"
+>;
+type Locale = "zh" | "en";
+type ReminderState = "UNREAD" | "READ" | "IGNORED";
+type NotificationFilter = "all" | "unread" | "overdue";
 
 export type JobApplication = {
   id: string;
@@ -77,232 +97,232 @@ export type JobApplication = {
 };
 
 const BOARD_COLUMNS = [
-  { key: 'APPLIED' },
-  { key: 'INTERVIEW' },
-  { key: 'REJECTED' },
-  { key: 'OFFER' },
+  { key: "APPLIED" },
+  { key: "INTERVIEW" },
+  { key: "REJECTED" },
+  { key: "OFFER" },
 ] as const satisfies ReadonlyArray<{ key: BoardColumnKey }>;
 
 const LOCALE_COPY = {
   zh: {
-    appTitle: '职位作战看板',
-    addJob: '新增职位',
-    requestFailed: '请求失败',
-    createNewJob: '创建新职位',
-    editTimeline: '时间设置',
-    viewDetails: '查看详情',
-    editResume: '编辑简历',
-    updatingResume: '上传中...',
-    editTimelineTitle: '设置面试与提醒时间',
-    interviewAtEmpty: '尚未设置面试时间',
-    followUpAtEmpty: '尚未设置跟进提醒',
-    saveTimeline: '保存时间设置',
-    savingTimeline: '保存中...',
-    unknownStatus: '未知状态',
-    unknownTime: '未知时间',
-    createdAt: '创建于',
-    aiAnalyze: 'AI 分析',
-    analyzing: '分析中...',
-    aiParsing: 'AI 正在解析简历与 JD',
-    matchScore: '岗位匹配度',
-    resumeScore: '简历评分',
-    resumeImprovements: '简历优化点',
-    noResumeImprovements: '暂无明显优化建议',
-    introTemplate: '推荐自我介绍模版',
-    viewFullAnalysis: '查看完整分析',
-    closeAnalysisModal: '关闭',
-    closeDetailsModal: '关闭详情',
-    jobDetailsTitle: '职位详情',
-    companyLabel: '公司',
-    positionLabel: '岗位',
-    sourceLabel: '来源',
-    jdTextLabel: '岗位描述（JD）',
-    resumeTextLabel: '简历内容',
-    resumeTextEmpty: '暂无简历内容',
-    totalJobs: '总职位数',
-    totalJobsHint: '当前追踪的岗位总量',
-    inInterview: '面试进行中',
-    inInterviewHint: '正在推进的面试机会',
-    offerRate: 'Offer 转化率',
-    offerRateHint: '已拿 Offer / 总职位',
-    momentum: '求职势能',
-    momentumStrong: '强劲',
-    momentumRampUp: '爬坡中',
-    momentumHint: '基于投递节奏的状态判断',
-    fetchJobsError: '加载职位列表失败',
-    createJobError: '创建职位失败',
-    createJobErrorHint: '创建职位失败，请稍后重试。',
-    updateResumeErrorHint: '更新简历失败，请稍后重试。',
-    analyzeError: 'AI 分析失败',
-    analyzeErrorHint: 'AI 分析失败，请确认已配置 GEMINI_API_KEY。',
-    updateStatusError: '状态更新失败',
-    dragUpdateError: '拖拽更新失败，已恢复到原状态。',
-    authRequiredHint: '登录状态已失效，请重新登录。',
-    loadingJobs: '正在加载你的职位数据...',
-    logout: '退出登录',
-    changePassword: '修改密码',
-    interviewCalendarTitle: '面试日历',
-    interviewCalendarHint: '近期面试安排一目了然',
-    noInterviewScheduled: '暂无已安排面试',
-    reminderTitle: '自动提醒',
-    reminderHint: '跟进和面试提醒会出现在这里',
-    noReminder: '暂无待处理提醒',
-    notificationCenterTitle: '通知中心',
-    notificationCenterHint: '统一查看提醒并进行已读、忽略、延后',
-    noNotifications: '暂无通知',
-    interviewAt: '面试',
-    followUpAt: '跟进',
-    reminderDue: '已到提醒时间',
-    reminderStaleApplied: '建议跟进，投递已超过 5 天',
-    staleAppliedFormat: '已投递 {{days}} 天',
-    reminderUpcoming: '即将到期',
-    reminderOverdue: '已超期',
-    actionRead: '标为已读',
-    actionIgnore: '忽略',
-    actionSnooze1d: '+1天',
-    actionSnooze3d: '+3天',
-    actionSnoozeWeekend: '周末',
-    stateUnread: '未读',
-    stateRead: '已读',
-    stateIgnored: '已忽略',
-    filterAll: '全部',
-    filterUnread: '未读',
-    filterOverdue: '超期',
-    markAllRead: '全部标记为已读',
-    markFilteredRead: '当前筛选标记已读',
+    appTitle: "职位作战看板",
+    addJob: "新增职位",
+    requestFailed: "请求失败",
+    createNewJob: "创建新职位",
+    editTimeline: "时间设置",
+    viewDetails: "查看详情",
+    editResume: "编辑简历",
+    updatingResume: "上传中...",
+    editTimelineTitle: "设置面试与提醒时间",
+    interviewAtEmpty: "尚未设置面试时间",
+    followUpAtEmpty: "尚未设置跟进提醒",
+    saveTimeline: "保存时间设置",
+    savingTimeline: "保存中...",
+    unknownStatus: "未知状态",
+    unknownTime: "未知时间",
+    createdAt: "创建于",
+    aiAnalyze: "AI 分析",
+    analyzing: "分析中...",
+    aiParsing: "AI 正在解析简历与 JD",
+    matchScore: "岗位匹配度",
+    resumeScore: "简历评分",
+    resumeImprovements: "简历优化点",
+    noResumeImprovements: "暂无明显优化建议",
+    introTemplate: "推荐自我介绍模版",
+    viewFullAnalysis: "查看完整分析",
+    closeAnalysisModal: "关闭",
+    closeDetailsModal: "关闭详情",
+    jobDetailsTitle: "职位详情",
+    companyLabel: "公司",
+    positionLabel: "岗位",
+    sourceLabel: "来源",
+    jdTextLabel: "岗位描述（JD）",
+    resumeTextLabel: "简历内容",
+    resumeTextEmpty: "暂无简历内容",
+    totalJobs: "总职位数",
+    totalJobsHint: "当前追踪的岗位总量",
+    inInterview: "面试进行中",
+    inInterviewHint: "正在推进的面试机会",
+    offerRate: "Offer 转化率",
+    offerRateHint: "已拿 Offer / 总职位",
+    momentum: "求职势能",
+    momentumStrong: "强劲",
+    momentumRampUp: "爬坡中",
+    momentumHint: "基于投递节奏的状态判断",
+    fetchJobsError: "加载职位列表失败",
+    createJobError: "创建职位失败",
+    createJobErrorHint: "创建职位失败，请稍后重试。",
+    updateResumeErrorHint: "更新简历失败，请稍后重试。",
+    analyzeError: "AI 分析失败",
+    analyzeErrorHint: "AI 分析失败，请确认已配置 GEMINI_API_KEY。",
+    updateStatusError: "状态更新失败",
+    dragUpdateError: "拖拽更新失败，已恢复到原状态。",
+    authRequiredHint: "登录状态已失效，请重新登录。",
+    loadingJobs: "正在加载你的职位数据...",
+    logout: "退出登录",
+    changePassword: "修改密码",
+    interviewCalendarTitle: "面试日历",
+    interviewCalendarHint: "近期面试安排一目了然",
+    noInterviewScheduled: "暂无已安排面试",
+    reminderTitle: "自动提醒",
+    reminderHint: "跟进和面试提醒会出现在这里",
+    noReminder: "暂无待处理提醒",
+    notificationCenterTitle: "通知中心",
+    notificationCenterHint: "统一查看提醒并进行已读、忽略、延后",
+    noNotifications: "暂无通知",
+    interviewAt: "面试",
+    followUpAt: "跟进",
+    reminderDue: "已到提醒时间",
+    reminderStaleApplied: "建议跟进，投递已超过 5 天",
+    staleAppliedFormat: "已投递 {{days}} 天",
+    reminderUpcoming: "即将到期",
+    reminderOverdue: "已超期",
+    actionRead: "标为已读",
+    actionIgnore: "忽略",
+    actionSnooze1d: "+1天",
+    actionSnooze3d: "+3天",
+    actionSnoozeWeekend: "周末",
+    stateUnread: "未读",
+    stateRead: "已读",
+    stateIgnored: "已忽略",
+    filterAll: "全部",
+    filterUnread: "未读",
+    filterOverdue: "超期",
+    markAllRead: "全部标记为已读",
+    markFilteredRead: "当前筛选标记已读",
     columns: {
-      APPLIED: '已投递',
-      INTERVIEW: '面试中',
-      REJECTED: '未通过',
-      OFFER: '已拿 Offer',
+      APPLIED: "已投递",
+      INTERVIEW: "面试中",
+      REJECTED: "未通过",
+      OFFER: "已拿 Offer",
     },
     emptyStates: {
       APPLIED: {
-        message: '还没有投递记录',
-        hint: '先添加一个目标岗位，开始你的求职流程。',
+        message: "还没有投递记录",
+        hint: "先添加一个目标岗位，开始你的求职流程。",
       },
       INTERVIEW: {
-        message: '暂无面试进展',
-        hint: '把已投递的岗位拖到这里，跟踪面试状态。',
+        message: "暂无面试进展",
+        hint: "把已投递的岗位拖到这里，跟踪面试状态。",
       },
       REJECTED: {
-        message: '暂无拒绝记录',
-        hint: '保持这个状态，继续优化简历与投递策略。',
+        message: "暂无拒绝记录",
+        hint: "保持这个状态，继续优化简历与投递策略。",
       },
       OFFER: {
-        message: '暂无 Offer，继续加油',
-        hint: '保持投递节奏，下一份 Offer 在路上。',
+        message: "暂无 Offer，继续加油",
+        hint: "保持投递节奏，下一份 Offer 在路上。",
       },
     },
   },
   en: {
-    appTitle: 'Job Search Board',
-    addJob: 'Add Job',
-    requestFailed: 'Request Failed',
-    createNewJob: 'Create New Job',
-    editTimeline: 'Set Timeline',
-    viewDetails: 'View Details',
-    editResume: 'Edit Resume',
-    updatingResume: 'Uploading...',
-    editTimelineTitle: 'Set interview and reminder times',
-    interviewAtEmpty: 'Interview time not set',
-    followUpAtEmpty: 'Follow-up reminder not set',
-    saveTimeline: 'Save timeline',
-    savingTimeline: 'Saving...',
-    unknownStatus: 'Unknown Status',
-    unknownTime: 'Unknown Time',
-    createdAt: 'Created',
-    aiAnalyze: 'AI Analyze',
-    analyzing: 'Analyzing...',
-    aiParsing: 'AI is analyzing the resume and JD',
-    matchScore: 'Role Match Score',
-    resumeScore: 'Resume Score',
-    resumeImprovements: 'Resume Improvements',
-    noResumeImprovements: 'No obvious improvements',
-    introTemplate: 'Suggested Intro Template',
-    viewFullAnalysis: 'View full analysis',
-    closeAnalysisModal: 'Close',
-    closeDetailsModal: 'Close details',
-    jobDetailsTitle: 'Job Details',
-    companyLabel: 'Company',
-    positionLabel: 'Position',
-    sourceLabel: 'Source',
-    jdTextLabel: 'Job Description (JD)',
-    resumeTextLabel: 'Resume Content',
-    resumeTextEmpty: 'No resume text yet',
-    totalJobs: 'Total Jobs',
-    totalJobsHint: 'Total tracked opportunities',
-    inInterview: 'In Interview',
-    inInterviewHint: 'Interview opportunities in progress',
-    offerRate: 'Offer Conversion',
-    offerRateHint: 'Offers / Total jobs',
-    momentum: 'Search Momentum',
-    momentumStrong: 'Strong',
-    momentumRampUp: 'Building',
-    momentumHint: 'Calculated from recent application pace',
-    fetchJobsError: 'Failed to load jobs',
-    createJobError: 'Failed to create job',
-    createJobErrorHint: 'Failed to create job. Please try again later.',
-    updateResumeErrorHint: 'Failed to update resume. Please try again later.',
-    analyzeError: 'AI analysis failed',
-    analyzeErrorHint: 'AI analysis failed. Please check GEMINI_API_KEY.',
-    updateStatusError: 'Failed to update status',
-    dragUpdateError: 'Drag update failed. Reverted to the previous state.',
-    authRequiredHint: 'Your session has expired. Please sign in again.',
-    loadingJobs: 'Loading your jobs...',
-    logout: 'Logout',
-    changePassword: 'Change Password',
-    interviewCalendarTitle: 'Interview Calendar',
-    interviewCalendarHint: 'Your upcoming interviews in one place',
-    noInterviewScheduled: 'No interviews scheduled yet',
-    reminderTitle: 'Auto Reminders',
-    reminderHint: 'Due follow-ups and interview alerts appear here',
-    noReminder: 'No pending reminders',
-    notificationCenterTitle: 'Notification Center',
-    notificationCenterHint: 'Manage reminders with read, ignore, and snooze',
-    noNotifications: 'No notifications',
-    interviewAt: 'Interview',
-    followUpAt: 'Follow-up',
-    reminderDue: 'Reminder is due',
-    reminderStaleApplied: 'Follow-up suggested, application is over 5 days old',
-    staleAppliedFormat: 'Applied for {{days}} days',
-    reminderUpcoming: 'Upcoming',
-    reminderOverdue: 'Overdue',
-    actionRead: 'Mark read',
-    actionIgnore: 'Ignore',
-    actionSnooze1d: '+1 day',
-    actionSnooze3d: '+3 days',
-    actionSnoozeWeekend: 'Weekend',
-    stateUnread: 'Unread',
-    stateRead: 'Read',
-    stateIgnored: 'Ignored',
-    filterAll: 'All',
-    filterUnread: 'Unread',
-    filterOverdue: 'Overdue',
-    markAllRead: 'Mark all as read',
-    markFilteredRead: 'Mark filtered as read',
+    appTitle: "Job Search Board",
+    addJob: "Add Job",
+    requestFailed: "Request Failed",
+    createNewJob: "Create New Job",
+    editTimeline: "Set Timeline",
+    viewDetails: "View Details",
+    editResume: "Edit Resume",
+    updatingResume: "Uploading...",
+    editTimelineTitle: "Set interview and reminder times",
+    interviewAtEmpty: "Interview time not set",
+    followUpAtEmpty: "Follow-up reminder not set",
+    saveTimeline: "Save timeline",
+    savingTimeline: "Saving...",
+    unknownStatus: "Unknown Status",
+    unknownTime: "Unknown Time",
+    createdAt: "Created",
+    aiAnalyze: "AI Analyze",
+    analyzing: "Analyzing...",
+    aiParsing: "AI is analyzing the resume and JD",
+    matchScore: "Role Match Score",
+    resumeScore: "Resume Score",
+    resumeImprovements: "Resume Improvements",
+    noResumeImprovements: "No obvious improvements",
+    introTemplate: "Suggested Intro Template",
+    viewFullAnalysis: "View full analysis",
+    closeAnalysisModal: "Close",
+    closeDetailsModal: "Close details",
+    jobDetailsTitle: "Job Details",
+    companyLabel: "Company",
+    positionLabel: "Position",
+    sourceLabel: "Source",
+    jdTextLabel: "Job Description (JD)",
+    resumeTextLabel: "Resume Content",
+    resumeTextEmpty: "No resume text yet",
+    totalJobs: "Total Jobs",
+    totalJobsHint: "Total tracked opportunities",
+    inInterview: "In Interview",
+    inInterviewHint: "Interview opportunities in progress",
+    offerRate: "Offer Conversion",
+    offerRateHint: "Offers / Total jobs",
+    momentum: "Search Momentum",
+    momentumStrong: "Strong",
+    momentumRampUp: "Building",
+    momentumHint: "Calculated from recent application pace",
+    fetchJobsError: "Failed to load jobs",
+    createJobError: "Failed to create job",
+    createJobErrorHint: "Failed to create job. Please try again later.",
+    updateResumeErrorHint: "Failed to update resume. Please try again later.",
+    analyzeError: "AI analysis failed",
+    analyzeErrorHint: "AI analysis failed. Please check GEMINI_API_KEY.",
+    updateStatusError: "Failed to update status",
+    dragUpdateError: "Drag update failed. Reverted to the previous state.",
+    authRequiredHint: "Your session has expired. Please sign in again.",
+    loadingJobs: "Loading your jobs...",
+    logout: "Logout",
+    changePassword: "Change Password",
+    interviewCalendarTitle: "Interview Calendar",
+    interviewCalendarHint: "Your upcoming interviews in one place",
+    noInterviewScheduled: "No interviews scheduled yet",
+    reminderTitle: "Auto Reminders",
+    reminderHint: "Due follow-ups and interview alerts appear here",
+    noReminder: "No pending reminders",
+    notificationCenterTitle: "Notification Center",
+    notificationCenterHint: "Manage reminders with read, ignore, and snooze",
+    noNotifications: "No notifications",
+    interviewAt: "Interview",
+    followUpAt: "Follow-up",
+    reminderDue: "Reminder is due",
+    reminderStaleApplied: "Follow-up suggested, application is over 5 days old",
+    staleAppliedFormat: "Applied for {{days}} days",
+    reminderUpcoming: "Upcoming",
+    reminderOverdue: "Overdue",
+    actionRead: "Mark read",
+    actionIgnore: "Ignore",
+    actionSnooze1d: "+1 day",
+    actionSnooze3d: "+3 days",
+    actionSnoozeWeekend: "Weekend",
+    stateUnread: "Unread",
+    stateRead: "Read",
+    stateIgnored: "Ignored",
+    filterAll: "All",
+    filterUnread: "Unread",
+    filterOverdue: "Overdue",
+    markAllRead: "Mark all as read",
+    markFilteredRead: "Mark filtered as read",
     columns: {
-      APPLIED: 'Applied',
-      INTERVIEW: 'Interview',
-      REJECTED: 'Rejected',
-      OFFER: 'Offer',
+      APPLIED: "Applied",
+      INTERVIEW: "Interview",
+      REJECTED: "Rejected",
+      OFFER: "Offer",
     },
     emptyStates: {
       APPLIED: {
-        message: 'No applications yet',
-        hint: 'Add your first target role to start tracking.',
+        message: "No applications yet",
+        hint: "Add your first target role to start tracking.",
       },
       INTERVIEW: {
-        message: 'No interview progress yet',
-        hint: 'Drag applied roles here to track interview stages.',
+        message: "No interview progress yet",
+        hint: "Drag applied roles here to track interview stages.",
       },
       REJECTED: {
-        message: 'No rejections so far',
-        hint: 'Keep it that way by iterating your resume strategy.',
+        message: "No rejections so far",
+        hint: "Keep it that way by iterating your resume strategy.",
       },
       OFFER: {
-        message: 'No offers yet, keep going',
-        hint: 'Stay consistent and your next offer will come.',
+        message: "No offers yet, keep going",
+        hint: "Stay consistent and your next offer will come.",
       },
     },
   },
@@ -325,32 +345,33 @@ type ColumnAccent = {
 
 const COLUMN_ACCENT: Record<BoardColumnKey, ColumnAccent> = {
   APPLIED: {
-    dot: 'bg-sky-500',
-    badge: 'bg-sky-50 text-sky-700 ring-1 ring-inset ring-sky-200/70',
-    tile: 'from-sky-500 to-cyan-500',
-    bar: 'from-sky-400 via-sky-500 to-cyan-400',
-    soft: 'bg-sky-50/60',
+    dot: "bg-sky-500",
+    badge: "bg-sky-50 text-sky-700 ring-1 ring-inset ring-sky-200/70",
+    tile: "from-sky-500 to-cyan-500",
+    bar: "from-sky-400 via-sky-500 to-cyan-400",
+    soft: "bg-sky-50/60",
   },
   INTERVIEW: {
-    dot: 'bg-violet-500',
-    badge: 'bg-violet-50 text-violet-700 ring-1 ring-inset ring-violet-200/70',
-    tile: 'from-violet-500 to-fuchsia-500',
-    bar: 'from-violet-400 via-violet-500 to-fuchsia-400',
-    soft: 'bg-violet-50/60',
+    dot: "bg-violet-500",
+    badge: "bg-violet-50 text-violet-700 ring-1 ring-inset ring-violet-200/70",
+    tile: "from-violet-500 to-fuchsia-500",
+    bar: "from-violet-400 via-violet-500 to-fuchsia-400",
+    soft: "bg-violet-50/60",
   },
   REJECTED: {
-    dot: 'bg-rose-400',
-    badge: 'bg-rose-50 text-rose-600 ring-1 ring-inset ring-rose-200/70',
-    tile: 'from-rose-400 to-orange-400',
-    bar: 'from-rose-300 via-rose-400 to-orange-300',
-    soft: 'bg-rose-50/50',
+    dot: "bg-rose-400",
+    badge: "bg-rose-50 text-rose-600 ring-1 ring-inset ring-rose-200/70",
+    tile: "from-rose-400 to-orange-400",
+    bar: "from-rose-300 via-rose-400 to-orange-300",
+    soft: "bg-rose-50/50",
   },
   OFFER: {
-    dot: 'bg-emerald-500',
-    badge: 'bg-emerald-50 text-emerald-700 ring-1 ring-inset ring-emerald-200/70',
-    tile: 'from-emerald-500 to-teal-500',
-    bar: 'from-emerald-400 via-emerald-500 to-teal-400',
-    soft: 'bg-emerald-50/60',
+    dot: "bg-emerald-500",
+    badge:
+      "bg-emerald-50 text-emerald-700 ring-1 ring-inset ring-emerald-200/70",
+    tile: "from-emerald-500 to-teal-500",
+    bar: "from-emerald-400 via-emerald-500 to-teal-400",
+    soft: "bg-emerald-50/60",
   },
 };
 
@@ -372,8 +393,8 @@ type ReminderItem = {
   company: string;
   position: string;
   dueAt: Date;
-  reason: 'follow-up' | 'stale-applied';
-  level: 'upcoming' | 'overdue';
+  reason: "follow-up" | "stale-applied";
+  level: "upcoming" | "overdue";
   state: ReminderState;
 };
 
@@ -421,7 +442,9 @@ type StructuredAiFeedback = {
   introTemplate: string;
 };
 
-function parseAiFeedback(aiFeedback: string | null): StructuredAiFeedback | null {
+function parseAiFeedback(
+  aiFeedback: string | null,
+): StructuredAiFeedback | null {
   if (!aiFeedback) {
     return null;
   }
@@ -433,16 +456,16 @@ function parseAiFeedback(aiFeedback: string | null): StructuredAiFeedback | null
     const resumeImprovements = parsed.resumeImprovements;
     const introTemplate = parsed.introTemplate;
     if (
-      typeof matchScore === 'number' &&
-      typeof resumeScore === 'number' &&
+      typeof matchScore === "number" &&
+      typeof resumeScore === "number" &&
       Array.isArray(resumeImprovements) &&
-      typeof introTemplate === 'string'
+      typeof introTemplate === "string"
     ) {
       return {
         matchScore,
         resumeScore,
         resumeImprovements: resumeImprovements.filter(
-          (item): item is string => typeof item === 'string',
+          (item): item is string => typeof item === "string",
         ),
         introTemplate,
       };
@@ -451,15 +474,15 @@ function parseAiFeedback(aiFeedback: string | null): StructuredAiFeedback | null
     const legacyMissingSkills = parsed.missingSkills;
     const legacyTailoredIntro = parsed.tailoredIntro;
     if (
-      typeof matchScore === 'number' &&
+      typeof matchScore === "number" &&
       Array.isArray(legacyMissingSkills) &&
-      typeof legacyTailoredIntro === 'string'
+      typeof legacyTailoredIntro === "string"
     ) {
       return {
         matchScore,
         resumeScore: 0,
         resumeImprovements: legacyMissingSkills.filter(
-          (item): item is string => typeof item === 'string',
+          (item): item is string => typeof item === "string",
         ),
         introTemplate: legacyTailoredIntro,
       };
@@ -498,7 +521,7 @@ function JobCard({
   let aiFeedbackFullNode: ReactNode = null;
   const structuredTextLength = structuredFeedback
     ? structuredFeedback.introTemplate.length +
-      structuredFeedback.resumeImprovements.join(' ').length
+      structuredFeedback.resumeImprovements.join(" ").length
     : 0;
   const plainFeedbackLength = job.aiFeedback?.length ?? 0;
   const shouldShowAiToggle = structuredFeedback
@@ -509,21 +532,31 @@ function JobCard({
     const content = (
       <div className="space-y-2 text-xs leading-6 text-slate-700">
         <p>
-          <span className="font-semibold text-slate-900">{copy.matchScore}: </span>
+          <span className="font-semibold text-slate-900">
+            {copy.matchScore}:{" "}
+          </span>
           {structuredFeedback.matchScore}/100
         </p>
         <p>
-          <span className="font-semibold text-slate-900">{copy.resumeScore}: </span>
+          <span className="font-semibold text-slate-900">
+            {copy.resumeScore}:{" "}
+          </span>
           {structuredFeedback.resumeScore}/100
         </p>
         <p>
-          <span className="font-semibold text-slate-900">{copy.resumeImprovements}: </span>
+          <span className="font-semibold text-slate-900">
+            {copy.resumeImprovements}:{" "}
+          </span>
           {structuredFeedback.resumeImprovements.length > 0
-            ? structuredFeedback.resumeImprovements.join(locale === 'zh' ? '、' : '; ')
+            ? structuredFeedback.resumeImprovements.join(
+                locale === "zh" ? "、" : "; ",
+              )
             : copy.noResumeImprovements}
         </p>
         <p>
-          <span className="font-semibold text-slate-900">{copy.introTemplate}: </span>
+          <span className="font-semibold text-slate-900">
+            {copy.introTemplate}:{" "}
+          </span>
           {structuredFeedback.introTemplate}
         </p>
       </div>
@@ -531,8 +564,8 @@ function JobCard({
     aiFeedbackPreviewNode = (
       <div
         className={cn(
-          'mt-3 rounded-md border border-slate-200 bg-slate-50 p-3',
-          shouldShowAiToggle && 'max-h-36 overflow-hidden',
+          "mt-3 rounded-md border border-slate-200 bg-slate-50 p-3",
+          shouldShowAiToggle && "max-h-36 overflow-hidden",
         )}
       >
         {content}
@@ -543,8 +576,8 @@ function JobCard({
     aiFeedbackPreviewNode = (
       <p
         className={cn(
-          'mt-3 rounded-md border border-slate-200 bg-slate-50 p-3 text-xs leading-6 text-slate-700',
-          shouldShowAiToggle && 'max-h-28 overflow-hidden',
+          "mt-3 rounded-md border border-slate-200 bg-slate-50 p-3 text-xs leading-6 text-slate-700",
+          shouldShowAiToggle && "max-h-28 overflow-hidden",
         )}
       >
         {job.aiFeedback}
@@ -568,22 +601,29 @@ function JobCard({
           {/* Placeholder for company logo; can be replaced with real logos later. */}
           <div
             className={cn(
-              'flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br text-base font-semibold text-white shadow-sm',
+              "flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br text-base font-semibold text-white shadow-sm",
               accent.tile,
             )}
           >
             {job.company.slice(0, 1).toUpperCase()}
           </div>
           <div className="min-w-0 space-y-0.5">
-            <CardTitle className="truncate text-sm font-semibold text-slate-900">{job.company}</CardTitle>
-            <CardDescription className="truncate text-sm text-slate-600">{job.position}</CardDescription>
+            <CardTitle className="truncate text-sm font-semibold text-slate-900">
+              {job.company}
+            </CardTitle>
+            <CardDescription className="truncate text-sm text-slate-600">
+              {job.position}
+            </CardDescription>
           </div>
         </div>
       </CardHeader>
 
       <CardContent className="pb-3">
         <div className="space-y-2.5">
-          <Badge variant="secondary" className={cn('w-fit rounded-full px-2.5', accent.badge)}>
+          <Badge
+            variant="secondary"
+            className={cn("w-fit rounded-full px-2.5", accent.badge)}
+          >
             {statusLabel}
           </Badge>
           <div className="grid grid-cols-2 gap-2">
@@ -597,7 +637,7 @@ function JobCard({
                 if (selectedFile) {
                   onUpdateResume(job.id, selectedFile);
                 }
-                event.currentTarget.value = '';
+                event.currentTarget.value = "";
               }}
             />
             <Button
@@ -640,7 +680,7 @@ function JobCard({
           </div>
         </div>
 
-        {isAnalyzing && typeof analyzeProgress === 'number' ? (
+        {isAnalyzing && typeof analyzeProgress === "number" ? (
           <div className="mt-3 rounded-md border border-slate-200 bg-slate-50 px-3 py-2">
             <div className="mb-1 flex items-center justify-between text-[11px] text-slate-500">
               <span>{copy.aiParsing}</span>
@@ -654,7 +694,9 @@ function JobCard({
           <div className="mt-3 space-y-1.5 rounded-md border border-slate-200 bg-slate-50 px-3 py-2 text-[11px] text-slate-600">
             {job.interviewAt ? (
               <p>
-                <span className="font-semibold text-slate-800">{copy.interviewAt}: </span>
+                <span className="font-semibold text-slate-800">
+                  {copy.interviewAt}:{" "}
+                </span>
                 {formatDateTime(job.interviewAt)}
               </p>
             ) : (
@@ -662,7 +704,9 @@ function JobCard({
             )}
             {job.followUpAt ? (
               <p>
-                <span className="font-semibold text-slate-800">{copy.followUpAt}: </span>
+                <span className="font-semibold text-slate-800">
+                  {copy.followUpAt}:{" "}
+                </span>
                 {formatDateTime(job.followUpAt)}
               </p>
             ) : (
@@ -697,83 +741,106 @@ function JobCard({
         <span className="text-xs text-slate-400">ID {job.id.slice(0, 6)}</span>
       </CardFooter>
 
-      {isAiModalOpen && aiFeedbackFullNode ? (
-        <div className="fixed inset-0 z-50 bg-slate-900/45 backdrop-blur-[1px]">
-          <button
-            type="button"
-            aria-label={copy.closeAnalysisModal}
-            className="absolute inset-0"
-            onClick={() => setIsAiModalOpen(false)}
-          />
-          <div className="relative mx-auto mt-10 w-[92vw] max-w-2xl rounded-xl border border-slate-200 bg-white p-4 shadow-2xl">
-            <div className="mb-3 flex items-center justify-between">
-              <p className="text-sm font-semibold text-slate-900">{copy.aiAnalyze}</p>
-              <Button
+      {isAiModalOpen && aiFeedbackFullNode
+        ? createPortal(
+            <div className="fixed inset-0 z-50 bg-slate-900/45 backdrop-blur-[1px]">
+              <button
                 type="button"
-                variant="ghost"
-                size="icon-sm"
+                aria-label={copy.closeAnalysisModal}
+                className="absolute inset-0"
                 onClick={() => setIsAiModalOpen(false)}
-              >
-                <X className="size-4" />
-              </Button>
-            </div>
-            <div className="max-h-[70vh] overflow-y-auto rounded-md border border-slate-200 bg-slate-50 p-3">
-              {aiFeedbackFullNode}
-            </div>
-          </div>
-        </div>
-      ) : null}
-
-      {isDetailsModalOpen ? (
-        <div className="fixed inset-0 z-50 bg-slate-900/45 backdrop-blur-[1px]">
-          <button
-            type="button"
-            aria-label={copy.closeDetailsModal}
-            className="absolute inset-0"
-            onClick={() => setIsDetailsModalOpen(false)}
-          />
-          <div className="relative mx-auto mt-10 w-[92vw] max-w-2xl rounded-xl border border-slate-200 bg-white p-4 shadow-2xl">
-            <div className="mb-3 flex items-center justify-between">
-              <p className="text-sm font-semibold text-slate-900">{copy.jobDetailsTitle}</p>
-              <Button
-                type="button"
-                variant="ghost"
-                size="icon-sm"
-                onClick={() => setIsDetailsModalOpen(false)}
-              >
-                <X className="size-4" />
-              </Button>
-            </div>
-            <div className="max-h-[70vh] space-y-3 overflow-y-auto">
-              <div className="rounded-lg border border-slate-200 bg-gradient-to-br from-slate-50 to-white p-3">
-                <div className="flex items-start justify-between gap-3">
-                  <div className="space-y-1">
-                    <p className="text-sm font-semibold text-slate-900">{job.company}</p>
-                    <p className="text-sm text-slate-600">{job.position}</p>
-                  </div>
-                  <Badge variant="secondary" className="rounded-md bg-sky-50 text-sky-700">
-                    {statusLabel}
-                  </Badge>
-                </div>
-                <div className="mt-3 text-xs text-slate-700">
-                  <p>
-                    <span className="font-semibold text-slate-900">{copy.sourceLabel}: </span>
-                    {job.source}
+              />
+              <div className="relative mx-auto mt-10 w-[92vw] max-w-2xl rounded-xl border border-slate-200 bg-white p-4 shadow-2xl">
+                <div className="mb-3 flex items-center justify-between">
+                  <p className="text-sm font-semibold text-slate-900">
+                    {copy.aiAnalyze}
                   </p>
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="icon-sm"
+                    onClick={() => setIsAiModalOpen(false)}
+                  >
+                    <X className="size-4" />
+                  </Button>
+                </div>
+                <div className="max-h-[70vh] overflow-y-auto rounded-md border border-slate-200 bg-slate-50 p-3">
+                  {aiFeedbackFullNode}
                 </div>
               </div>
-              <div className="rounded-lg border border-slate-200 bg-slate-50 p-3 text-xs leading-6 text-slate-700">
-                <p className="mb-2 text-sm font-semibold text-slate-900">{copy.jdTextLabel}</p>
-                <p className="whitespace-pre-wrap">{job.jdText}</p>
+            </div>,
+            document.body,
+          )
+        : null}
+
+      {isDetailsModalOpen
+        ? createPortal(
+            <div className="fixed inset-0 z-50 bg-slate-900/45 backdrop-blur-[1px]">
+              <button
+                type="button"
+                aria-label={copy.closeDetailsModal}
+                className="absolute inset-0"
+                onClick={() => setIsDetailsModalOpen(false)}
+              />
+              <div className="relative mx-auto mt-10 w-[92vw] max-w-2xl rounded-xl border border-slate-200 bg-white p-4 shadow-2xl">
+                <div className="mb-3 flex items-center justify-between">
+                  <p className="text-sm font-semibold text-slate-900">
+                    {copy.jobDetailsTitle}
+                  </p>
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="icon-sm"
+                    onClick={() => setIsDetailsModalOpen(false)}
+                  >
+                    <X className="size-4" />
+                  </Button>
+                </div>
+                <div className="max-h-[70vh] space-y-3 overflow-y-auto">
+                  <div className="rounded-lg border border-slate-200 bg-gradient-to-br from-slate-50 to-white p-3">
+                    <div className="flex items-start justify-between gap-3">
+                      <div className="space-y-1">
+                        <p className="text-sm font-semibold text-slate-900">
+                          {job.company}
+                        </p>
+                        <p className="text-sm text-slate-600">{job.position}</p>
+                      </div>
+                      <Badge
+                        variant="secondary"
+                        className="rounded-md bg-sky-50 text-sky-700"
+                      >
+                        {statusLabel}
+                      </Badge>
+                    </div>
+                    <div className="mt-3 text-xs text-slate-700">
+                      <p>
+                        <span className="font-semibold text-slate-900">
+                          {copy.sourceLabel}:{" "}
+                        </span>
+                        {job.source}
+                      </p>
+                    </div>
+                  </div>
+                  <div className="rounded-lg border border-slate-200 bg-slate-50 p-3 text-xs leading-6 text-slate-700">
+                    <p className="mb-2 text-sm font-semibold text-slate-900">
+                      {copy.jdTextLabel}
+                    </p>
+                    <p className="whitespace-pre-wrap">{job.jdText}</p>
+                  </div>
+                  <div className="rounded-lg border border-slate-200 bg-slate-50 p-3 text-xs leading-6 text-slate-700">
+                    <p className="mb-2 text-sm font-semibold text-slate-900">
+                      {copy.resumeTextLabel}
+                    </p>
+                    <p className="whitespace-pre-wrap">
+                      {job.resumeText || copy.resumeTextEmpty}
+                    </p>
+                  </div>
+                </div>
               </div>
-              <div className="rounded-lg border border-slate-200 bg-slate-50 p-3 text-xs leading-6 text-slate-700">
-                <p className="mb-2 text-sm font-semibold text-slate-900">{copy.resumeTextLabel}</p>
-                <p className="whitespace-pre-wrap">{job.resumeText || copy.resumeTextEmpty}</p>
-              </div>
-            </div>
-          </div>
-        </div>
-      ) : null}
+            </div>,
+            document.body,
+          )
+        : null}
     </Card>
   );
 }
@@ -805,7 +872,14 @@ function SortableJobCard({
   formatCreatedAt,
   formatDateTime,
 }: Readonly<SortableJobCardProps>) {
-  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
+  const {
+    attributes,
+    listeners,
+    setNodeRef,
+    transform,
+    transition,
+    isDragging,
+  } = useSortable({
     id: job.id,
   });
 
@@ -871,14 +945,19 @@ function BoardColumn({
     <div
       ref={setNodeRef}
       className={cn(
-        'relative overflow-hidden rounded-2xl border border-slate-200/70 bg-white/70 p-4 shadow-sm ring-1 ring-slate-950/[0.02] backdrop-blur-sm transition',
-        isOver && 'border-sky-300 shadow-md ring-2 ring-sky-200/60',
+        "relative overflow-hidden rounded-2xl border border-slate-200/70 bg-white/70 p-4 shadow-sm ring-1 ring-slate-950/[0.02] backdrop-blur-sm transition",
+        isOver && "border-sky-300 shadow-md ring-2 ring-sky-200/60",
       )}
     >
-      <div className={cn('absolute inset-x-0 top-0 h-1 bg-gradient-to-r', accent.bar)} />
+      <div
+        className={cn(
+          "absolute inset-x-0 top-0 h-1 bg-gradient-to-r",
+          accent.bar,
+        )}
+      />
       <div className="mb-4 mt-1 flex items-center justify-between">
         <h2 className="flex items-center gap-2 text-xs font-semibold tracking-wider text-slate-600 uppercase">
-          <span className={cn('size-2 rounded-full', accent.dot)} />
+          <span className={cn("size-2 rounded-full", accent.dot)} />
           {columnLabel}
         </h2>
         <span className="inline-flex h-6 min-w-6 items-center justify-center rounded-full bg-slate-100 px-2 text-xs font-semibold text-slate-600">
@@ -886,7 +965,10 @@ function BoardColumn({
         </span>
       </div>
 
-      <SortableContext items={jobs.map((job) => job.id)} strategy={verticalListSortingStrategy}>
+      <SortableContext
+        items={jobs.map((job) => job.id)}
+        strategy={verticalListSortingStrategy}
+      >
         <div className="space-y-4">
           {jobs.map((job) => (
             <SortableJobCard
@@ -894,7 +976,7 @@ function BoardColumn({
               job={job}
               statusLabel={columnLabel}
               locale={locale}
-              isAnalyzing={typeof analyzingProgress[job.id] === 'number'}
+              isAnalyzing={typeof analyzingProgress[job.id] === "number"}
               isUpdatingResume={Boolean(updatingResumeIds[job.id])}
               analyzeProgress={analyzingProgress[job.id]}
               onAnalyze={onAnalyze}
@@ -911,7 +993,9 @@ function BoardColumn({
               <p className="text-xs font-medium text-slate-500">
                 {copy.emptyStates[columnKey].message}
               </p>
-              <p className="mt-1 text-[11px] text-slate-400">{copy.emptyStates[columnKey].hint}</p>
+              <p className="mt-1 text-[11px] text-slate-400">
+                {copy.emptyStates[columnKey].hint}
+              </p>
             </div>
           ) : null}
         </div>
@@ -923,38 +1007,47 @@ function BoardColumn({
 export function JobBoard({ initialJobs }: Readonly<JobBoardProps>) {
   const router = useRouter();
   const [locale, setLocale] = useState<Locale>(() => {
-    if (typeof globalThis === 'undefined' || !('localStorage' in globalThis)) {
-      return 'zh';
+    if (typeof globalThis === "undefined" || !("localStorage" in globalThis)) {
+      return "zh";
     }
 
-    const savedLocale = globalThis.localStorage.getItem('apply-flow-locale');
-    if (savedLocale === 'zh' || savedLocale === 'en') {
+    const savedLocale = globalThis.localStorage.getItem("apply-flow-locale");
+    if (savedLocale === "zh" || savedLocale === "en") {
       return savedLocale;
     }
 
-    if ('navigator' in globalThis) {
-      return globalThis.navigator.language.toLowerCase().startsWith('zh') ? 'zh' : 'en';
+    if ("navigator" in globalThis) {
+      return globalThis.navigator.language.toLowerCase().startsWith("zh")
+        ? "zh"
+        : "en";
     }
 
-    return 'zh';
+    return "zh";
   });
   const [jobs, setJobs] = useState<JobApplication[]>(initialJobs);
   const [isCreating, setIsCreating] = useState(false);
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [timelineJobId, setTimelineJobId] = useState<string | null>(null);
-  const [timelineInterviewAt, setTimelineInterviewAt] = useState('');
-  const [timelineFollowUpAt, setTimelineFollowUpAt] = useState('');
+  const [timelineInterviewAt, setTimelineInterviewAt] = useState("");
+  const [timelineFollowUpAt, setTimelineFollowUpAt] = useState("");
   const [isSavingTimeline, setIsSavingTimeline] = useState(false);
   const [isAuthChecking, setIsAuthChecking] = useState(true);
-  const [updatingResumeIds, setUpdatingResumeIds] = useState<Record<string, boolean>>({});
+  const [updatingResumeIds, setUpdatingResumeIds] = useState<
+    Record<string, boolean>
+  >({});
   const [isNotificationOpen, setIsNotificationOpen] = useState(false);
-  const [notificationFilter, setNotificationFilter] = useState<NotificationFilter>('all');
+  const [notificationFilter, setNotificationFilter] =
+    useState<NotificationFilter>("all");
   const [nowTs, setNowTs] = useState(0);
-  const [analyzingProgress, setAnalyzingProgress] = useState<Record<string, number>>({});
+  const [analyzingProgress, setAnalyzingProgress] = useState<
+    Record<string, number>
+  >({});
   const [activeJobId, setActiveJobId] = useState<string | null>(null);
   const [currentUser, setCurrentUser] = useState<AuthUser | null>(null);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
-  const analyzeTimerRef = useRef<Record<string, ReturnType<typeof setInterval>>>({});
+  const analyzeTimerRef = useRef<
+    Record<string, ReturnType<typeof setInterval>>
+  >({});
   const notificationPanelRef = useRef<HTMLDivElement | null>(null);
   const sensors = useSensors(
     useSensor(PointerSensor, {
@@ -971,7 +1064,7 @@ export function JobBoard({ initialJobs }: Readonly<JobBoardProps>) {
     }
 
     setLocale(nextLocale);
-    globalThis.localStorage.setItem('apply-flow-locale', nextLocale);
+    globalThis.localStorage.setItem("apply-flow-locale", nextLocale);
   };
 
   const clearAnalyzeTimer = (jobId: string) => {
@@ -989,12 +1082,14 @@ export function JobBoard({ initialJobs }: Readonly<JobBoardProps>) {
     setJobs([]);
     setIsFormOpen(false);
     setErrorMessage(copy.authRequiredHint);
-    router.replace('/login');
+    router.replace("/login");
   };
 
   useEffect(() => {
     return () => {
-      Object.values(analyzeTimerRef.current).forEach((timer) => clearInterval(timer));
+      Object.values(analyzeTimerRef.current).forEach((timer) =>
+        clearInterval(timer),
+      );
       analyzeTimerRef.current = {};
     };
   }, []);
@@ -1014,17 +1109,20 @@ export function JobBoard({ initialJobs }: Readonly<JobBoardProps>) {
   useEffect(() => {
     const handleOutsideClick = (event: MouseEvent) => {
       const target = event.target as Node;
-      if (notificationPanelRef.current && !notificationPanelRef.current.contains(target)) {
+      if (
+        notificationPanelRef.current &&
+        !notificationPanelRef.current.contains(target)
+      ) {
         setIsNotificationOpen(false);
       }
     };
 
     if (isNotificationOpen) {
-      globalThis.document.addEventListener('mousedown', handleOutsideClick);
+      globalThis.document.addEventListener("mousedown", handleOutsideClick);
     }
 
     return () => {
-      globalThis.document.removeEventListener('mousedown', handleOutsideClick);
+      globalThis.document.removeEventListener("mousedown", handleOutsideClick);
     };
   }, [isNotificationOpen]);
 
@@ -1033,13 +1131,13 @@ export function JobBoard({ initialJobs }: Readonly<JobBoardProps>) {
 
     const checkSession = async () => {
       try {
-        const profile = await apiJson<{ user: AuthUser }>('/api/auth/me');
+        const profile = await apiJson<{ user: AuthUser }>("/api/auth/me");
         if (!isMounted) {
           return;
         }
         setCurrentUser(profile.user);
 
-        const jobsResponse = await apiFetch('/api/jobs', { cache: 'no-store' });
+        const jobsResponse = await apiFetch("/api/jobs", { cache: "no-store" });
         if (!isMounted) {
           return;
         }
@@ -1076,7 +1174,7 @@ export function JobBoard({ initialJobs }: Readonly<JobBoardProps>) {
   }, [copy.authRequiredHint, copy.fetchJobsError, router]);
 
   const fetchJobs = async () => {
-    const response = await apiFetch('/api/jobs', { cache: 'no-store' });
+    const response = await apiFetch("/api/jobs", { cache: "no-store" });
     if (response.status === 401) {
       handleUnauthorized();
       return;
@@ -1089,50 +1187,57 @@ export function JobBoard({ initialJobs }: Readonly<JobBoardProps>) {
   };
 
   const jobsByStatus = useMemo(() => {
-    return BOARD_COLUMNS.reduce<Record<BoardColumnKey, JobApplication[]>>((acc, column) => {
-      acc[column.key] = jobs.filter((job) => job.status === column.key);
-      return acc;
-    }, {} as Record<BoardColumnKey, JobApplication[]>);
+    return BOARD_COLUMNS.reduce<Record<BoardColumnKey, JobApplication[]>>(
+      (acc, column) => {
+        acc[column.key] = jobs.filter((job) => job.status === column.key);
+        return acc;
+      },
+      {} as Record<BoardColumnKey, JobApplication[]>,
+    );
   }, [jobs]);
 
   const dashboardMetrics = useMemo<DashboardMetric[]>(() => {
     const totalCount = jobs.length;
     const interviewCount = jobsByStatus.INTERVIEW.length;
     const offerCount = jobsByStatus.OFFER.length;
-    const offerRate = totalCount > 0 ? `${Math.round((offerCount / totalCount) * 100)}%` : '0%';
+    const offerRate =
+      totalCount > 0 ? `${Math.round((offerCount / totalCount) * 100)}%` : "0%";
 
     return [
       {
-        key: 'total',
+        key: "total",
         label: copy.totalJobs,
         value: String(totalCount),
         hint: copy.totalJobsHint,
         icon: BriefcaseBusiness,
-        tile: 'from-sky-500 to-cyan-500',
+        tile: "from-sky-500 to-cyan-500",
       },
       {
-        key: 'interview',
+        key: "interview",
         label: copy.inInterview,
         value: String(interviewCount),
         hint: copy.inInterviewHint,
         icon: Activity,
-        tile: 'from-violet-500 to-fuchsia-500',
+        tile: "from-violet-500 to-fuchsia-500",
       },
       {
-        key: 'offer-rate',
+        key: "offer-rate",
         label: copy.offerRate,
         value: offerRate,
         hint: copy.offerRateHint,
         icon: TrendingUp,
-        tile: 'from-emerald-500 to-teal-500',
+        tile: "from-emerald-500 to-teal-500",
       },
       {
-        key: 'momentum',
+        key: "momentum",
         label: copy.momentum,
-        value: jobsByStatus.APPLIED.length >= 3 ? copy.momentumStrong : copy.momentumRampUp,
+        value:
+          jobsByStatus.APPLIED.length >= 3
+            ? copy.momentumStrong
+            : copy.momentumRampUp,
         hint: copy.momentumHint,
         icon: Rocket,
-        tile: 'from-amber-500 to-orange-500',
+        tile: "from-amber-500 to-orange-500",
       },
     ];
   }, [copy, jobs, jobsByStatus]);
@@ -1140,7 +1245,7 @@ export function JobBoard({ initialJobs }: Readonly<JobBoardProps>) {
   const upcomingInterviews = useMemo(() => {
     const now = nowTs;
     return jobs
-      .filter((job) => typeof job.interviewAt === 'string')
+      .filter((job) => typeof job.interviewAt === "string")
       .map((job) => ({
         jobId: job.id,
         company: job.company,
@@ -1151,7 +1256,10 @@ export function JobBoard({ initialJobs }: Readonly<JobBoardProps>) {
         const value = new Date(job.interviewAt).getTime();
         return Number.isFinite(value) && value >= now - 24 * 60 * 60 * 1000;
       })
-      .sort((a, b) => new Date(a.interviewAt).getTime() - new Date(b.interviewAt).getTime())
+      .sort(
+        (a, b) =>
+          new Date(a.interviewAt).getTime() - new Date(b.interviewAt).getTime(),
+      )
       .slice(0, 6);
   }, [jobs, nowTs]);
 
@@ -1162,7 +1270,7 @@ export function JobBoard({ initialJobs }: Readonly<JobBoardProps>) {
     return jobs
       .flatMap((job) => {
         const reminders: ReminderItem[] = [];
-        const isIgnored = job.reminderState === 'IGNORED';
+        const isIgnored = job.reminderState === "IGNORED";
         if (isIgnored) {
           return reminders;
         }
@@ -1176,32 +1284,34 @@ export function JobBoard({ initialJobs }: Readonly<JobBoardProps>) {
             !Number.isNaN(followUpDate.getTime()) &&
             followUpDate.getTime() <= next24Hours &&
             (snoozedUntil === null || snoozedUntil <= now.getTime()) &&
-            (job.status === 'APPLIED' || job.status === 'INTERVIEW')
+            (job.status === "APPLIED" || job.status === "INTERVIEW")
           ) {
             reminders.push({
               jobId: job.id,
               company: job.company,
               position: job.position,
               dueAt: followUpDate,
-              reason: 'follow-up',
-              level: followUpDate <= now ? 'overdue' : 'upcoming',
+              reason: "follow-up",
+              level: followUpDate <= now ? "overdue" : "upcoming",
               state: job.reminderState,
             });
           }
         }
 
-        if (!job.followUpAt && job.status === 'APPLIED') {
+        if (!job.followUpAt && job.status === "APPLIED") {
           const createdAt = new Date(job.createdAt);
           if (!Number.isNaN(createdAt.getTime())) {
-            const ageInDays = Math.floor((now.getTime() - createdAt.getTime()) / (24 * 60 * 60 * 1000));
+            const ageInDays = Math.floor(
+              (now.getTime() - createdAt.getTime()) / (24 * 60 * 60 * 1000),
+            );
             if (ageInDays >= 5) {
               reminders.push({
                 jobId: job.id,
                 company: job.company,
                 position: job.position,
                 dueAt: createdAt,
-                reason: 'stale-applied',
-                level: 'overdue',
+                reason: "stale-applied",
+                level: "overdue",
                 state: job.reminderState,
               });
             }
@@ -1215,27 +1325,27 @@ export function JobBoard({ initialJobs }: Readonly<JobBoardProps>) {
   }, [jobs, nowTs]);
 
   const notificationItems = useMemo(() => {
-    return reminderItems.filter((item) => item.state !== 'IGNORED');
+    return reminderItems.filter((item) => item.state !== "IGNORED");
   }, [reminderItems]);
 
   const filteredNotificationItems = useMemo(() => {
-    if (notificationFilter === 'unread') {
-      return notificationItems.filter((item) => item.state === 'UNREAD');
+    if (notificationFilter === "unread") {
+      return notificationItems.filter((item) => item.state === "UNREAD");
     }
 
-    if (notificationFilter === 'overdue') {
-      return notificationItems.filter((item) => item.level === 'overdue');
+    if (notificationFilter === "overdue") {
+      return notificationItems.filter((item) => item.level === "overdue");
     }
 
     return notificationItems;
   }, [notificationFilter, notificationItems]);
 
   const unreadNotificationCount = useMemo(() => {
-    return notificationItems.filter((item) => item.state === 'UNREAD').length;
+    return notificationItems.filter((item) => item.state === "UNREAD").length;
   }, [notificationItems]);
 
   const pendingReminderItems = useMemo(() => {
-    return reminderItems.filter((item) => item.state === 'UNREAD');
+    return reminderItems.filter((item) => item.state === "UNREAD");
   }, [reminderItems]);
 
   const formatCreatedAt = (dateText: string) => {
@@ -1243,9 +1353,9 @@ export function JobBoard({ initialJobs }: Readonly<JobBoardProps>) {
     if (Number.isNaN(date.getTime())) {
       return copy.unknownTime;
     }
-    return new Intl.DateTimeFormat(locale === 'zh' ? 'zh-CN' : 'en-US', {
-      month: 'short',
-      day: 'numeric',
+    return new Intl.DateTimeFormat(locale === "zh" ? "zh-CN" : "en-US", {
+      month: "short",
+      day: "numeric",
     }).format(date);
   };
 
@@ -1255,28 +1365,30 @@ export function JobBoard({ initialJobs }: Readonly<JobBoardProps>) {
       return copy.unknownTime;
     }
 
-    return new Intl.DateTimeFormat(locale === 'zh' ? 'zh-CN' : 'en-US', {
-      month: 'short',
-      day: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit',
+    return new Intl.DateTimeFormat(locale === "zh" ? "zh-CN" : "en-US", {
+      month: "short",
+      day: "numeric",
+      hour: "2-digit",
+      minute: "2-digit",
     }).format(date);
   };
 
   const formatReminderAge = (days: number) => {
-    return copy.staleAppliedFormat.replace('{{days}}', String(days));
+    return copy.staleAppliedFormat.replace("{{days}}", String(days));
   };
 
   const toDateTimeLocalValue = (dateText: string | null) => {
     if (!dateText) {
-      return '';
+      return "";
     }
     const date = new Date(dateText);
     if (Number.isNaN(date.getTime())) {
-      return '';
+      return "";
     }
 
-    const localDate = new Date(date.getTime() - date.getTimezoneOffset() * 60000);
+    const localDate = new Date(
+      date.getTime() - date.getTimezoneOffset() * 60000,
+    );
     return localDate.toISOString().slice(0, 16);
   };
 
@@ -1284,20 +1396,22 @@ export function JobBoard({ initialJobs }: Readonly<JobBoardProps>) {
     const base = new Date(nowTs);
     const day = base.getDay();
     const daysToSaturday = day <= 6 ? (6 - day + 7) % 7 : 0;
-    const target = new Date(base.getTime() + (daysToSaturday || 7) * 24 * 60 * 60 * 1000);
+    const target = new Date(
+      base.getTime() + (daysToSaturday || 7) * 24 * 60 * 60 * 1000,
+    );
     target.setHours(9, 0, 0, 0);
     return target.toISOString();
   };
 
   const handleReminderAction = async (
     jobId: string,
-    action: 'read' | 'ignore' | 'snooze',
+    action: "read" | "ignore" | "snooze",
     snoozeUntil?: string,
   ) => {
     try {
       const response = await apiFetch(`/api/jobs/${jobId}/reminder`, {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           action,
           snoozeUntil,
@@ -1310,11 +1424,13 @@ export function JobBoard({ initialJobs }: Readonly<JobBoardProps>) {
       }
 
       if (!response.ok) {
-        throw new Error('Failed to update reminder');
+        throw new Error("Failed to update reminder");
       }
 
       const updatedJob = (await response.json()) as JobApplication;
-      setJobs((prev) => prev.map((job) => (job.id === updatedJob.id ? updatedJob : job)));
+      setJobs((prev) =>
+        prev.map((job) => (job.id === updatedJob.id ? updatedJob : job)),
+      );
     } catch (error) {
       console.error(error);
     }
@@ -1334,8 +1450,8 @@ export function JobBoard({ initialJobs }: Readonly<JobBoardProps>) {
     try {
       setIsSavingTimeline(true);
       const response = await apiFetch(`/api/jobs/${timelineJobId}`, {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           interviewAt: timelineInterviewAt || null,
           followUpAt: timelineFollowUpAt || null,
@@ -1348,11 +1464,13 @@ export function JobBoard({ initialJobs }: Readonly<JobBoardProps>) {
       }
 
       if (!response.ok) {
-        throw new Error('Failed to update timeline.');
+        throw new Error("Failed to update timeline.");
       }
 
       const updatedJob = (await response.json()) as JobApplication;
-      setJobs((prev) => prev.map((job) => (job.id === updatedJob.id ? updatedJob : job)));
+      setJobs((prev) =>
+        prev.map((job) => (job.id === updatedJob.id ? updatedJob : job)),
+      );
       setTimelineJobId(null);
     } catch (error) {
       console.error(error);
@@ -1363,9 +1481,9 @@ export function JobBoard({ initialJobs }: Readonly<JobBoardProps>) {
 
   const handleBulkMarkRead = async (jobIds?: string[]) => {
     try {
-      const response = await apiFetch('/api/jobs/reminders/mark-read', {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
+      const response = await apiFetch("/api/jobs/reminders/mark-read", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           ids: jobIds,
         }),
@@ -1377,7 +1495,7 @@ export function JobBoard({ initialJobs }: Readonly<JobBoardProps>) {
       }
 
       if (!response.ok) {
-        throw new Error('Failed to mark reminders as read.');
+        throw new Error("Failed to mark reminders as read.");
       }
 
       await fetchJobs();
@@ -1398,16 +1516,16 @@ export function JobBoard({ initialJobs }: Readonly<JobBoardProps>) {
       setErrorMessage(null);
 
       const formData = new FormData();
-      formData.append('company', payload.company);
-      formData.append('position', payload.position);
-      formData.append('source', payload.source);
-      formData.append('jdText', payload.jdText);
+      formData.append("company", payload.company);
+      formData.append("position", payload.position);
+      formData.append("source", payload.source);
+      formData.append("jdText", payload.jdText);
       if (payload.resumeFile) {
-        formData.append('resume', payload.resumeFile);
+        formData.append("resume", payload.resumeFile);
       }
 
-      const response = await apiFetch('/api/jobs', {
-        method: 'POST',
+      const response = await apiFetch("/api/jobs", {
+        method: "POST",
         body: formData,
       });
 
@@ -1436,10 +1554,10 @@ export function JobBoard({ initialJobs }: Readonly<JobBoardProps>) {
       setUpdatingResumeIds((prev) => ({ ...prev, [jobId]: true }));
 
       const formData = new FormData();
-      formData.append('resume', file);
+      formData.append("resume", file);
 
       const response = await apiFetch(`/api/jobs/${jobId}/resume`, {
-        method: 'PATCH',
+        method: "PATCH",
         body: formData,
       });
 
@@ -1450,14 +1568,16 @@ export function JobBoard({ initialJobs }: Readonly<JobBoardProps>) {
 
       if (!response.ok) {
         const rawError = (await response.text()).trim();
-        let detailedMessage = '';
+        let detailedMessage = "";
 
         if (rawError) {
           try {
-            const parsed = JSON.parse(rawError) as { message?: string | string[] };
+            const parsed = JSON.parse(rawError) as {
+              message?: string | string[];
+            };
             if (Array.isArray(parsed.message)) {
-              detailedMessage = parsed.message.join('; ');
-            } else if (typeof parsed.message === 'string') {
+              detailedMessage = parsed.message.join("; ");
+            } else if (typeof parsed.message === "string") {
               detailedMessage = parsed.message;
             } else {
               detailedMessage = rawError;
@@ -1471,10 +1591,14 @@ export function JobBoard({ initialJobs }: Readonly<JobBoardProps>) {
       }
 
       const updatedJob = (await response.json()) as JobApplication;
-      setJobs((prev) => prev.map((job) => (job.id === updatedJob.id ? updatedJob : job)));
+      setJobs((prev) =>
+        prev.map((job) => (job.id === updatedJob.id ? updatedJob : job)),
+      );
     } catch (error) {
       console.error(error);
-      setErrorMessage(error instanceof Error ? error.message : copy.updateResumeErrorHint);
+      setErrorMessage(
+        error instanceof Error ? error.message : copy.updateResumeErrorHint,
+      );
     } finally {
       setUpdatingResumeIds((prev) => {
         const next = { ...prev };
@@ -1485,7 +1609,7 @@ export function JobBoard({ initialJobs }: Readonly<JobBoardProps>) {
   };
 
   const handleAnalyze = async (jobId: string) => {
-    if (typeof analyzingProgress[jobId] === 'number') {
+    if (typeof analyzingProgress[jobId] === "number") {
       return;
     }
 
@@ -1494,7 +1618,7 @@ export function JobBoard({ initialJobs }: Readonly<JobBoardProps>) {
     analyzeTimerRef.current[jobId] = setInterval(() => {
       setAnalyzingProgress((prev) => {
         const current = prev[jobId];
-        if (typeof current !== 'number') {
+        if (typeof current !== "number") {
           return prev;
         }
         const next = Math.min(92, current + Math.random() * 14);
@@ -1505,8 +1629,8 @@ export function JobBoard({ initialJobs }: Readonly<JobBoardProps>) {
     try {
       setErrorMessage(null);
       const response = await apiFetch(`/api/jobs/${jobId}/analyze`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ locale }),
       });
 
@@ -1517,14 +1641,16 @@ export function JobBoard({ initialJobs }: Readonly<JobBoardProps>) {
 
       if (!response.ok) {
         const rawError = (await response.text()).trim();
-        let detailedMessage = '';
+        let detailedMessage = "";
 
         if (rawError) {
           try {
-            const parsed = JSON.parse(rawError) as { message?: string | string[] };
+            const parsed = JSON.parse(rawError) as {
+              message?: string | string[];
+            };
             if (Array.isArray(parsed.message)) {
-              detailedMessage = parsed.message.join('; ');
-            } else if (typeof parsed.message === 'string') {
+              detailedMessage = parsed.message.join("; ");
+            } else if (typeof parsed.message === "string") {
               detailedMessage = parsed.message;
             } else {
               detailedMessage = rawError;
@@ -1540,7 +1666,9 @@ export function JobBoard({ initialJobs }: Readonly<JobBoardProps>) {
       const updatedJob = (await response.json()) as JobApplication;
       clearAnalyzeTimer(jobId);
       setAnalyzingProgress((prev) => ({ ...prev, [jobId]: 100 }));
-      setJobs((prev) => prev.map((job) => (job.id === updatedJob.id ? updatedJob : job)));
+      setJobs((prev) =>
+        prev.map((job) => (job.id === updatedJob.id ? updatedJob : job)),
+      );
       setTimeout(() => {
         setAnalyzingProgress((prev) => {
           const next = { ...prev };
@@ -1550,7 +1678,9 @@ export function JobBoard({ initialJobs }: Readonly<JobBoardProps>) {
       }, 420);
     } catch (error) {
       console.error(error);
-      setErrorMessage(error instanceof Error ? error.message : copy.analyzeErrorHint);
+      setErrorMessage(
+        error instanceof Error ? error.message : copy.analyzeErrorHint,
+      );
       clearAnalyzeTimer(jobId);
       setAnalyzingProgress((prev) => {
         const next = { ...prev };
@@ -1600,14 +1730,16 @@ export function JobBoard({ initialJobs }: Readonly<JobBoardProps>) {
     // Optimistic update: move the card first and roll back on failure.
     const previousJobs = jobs;
     setJobs((prev) =>
-      prev.map((job) => (job.id === activeId ? { ...job, status: targetStatus } : job)),
+      prev.map((job) =>
+        job.id === activeId ? { ...job, status: targetStatus } : job,
+      ),
     );
 
     try {
       setErrorMessage(null);
       const response = await apiFetch(`/api/jobs/${activeId}`, {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ status: targetStatus }),
       });
 
@@ -1621,7 +1753,9 @@ export function JobBoard({ initialJobs }: Readonly<JobBoardProps>) {
       }
 
       const updatedJob = (await response.json()) as JobApplication;
-      setJobs((prev) => prev.map((job) => (job.id === activeId ? updatedJob : job)));
+      setJobs((prev) =>
+        prev.map((job) => (job.id === activeId ? updatedJob : job)),
+      );
     } catch (error) {
       console.error(error);
       setJobs(previousJobs);
@@ -1629,7 +1763,9 @@ export function JobBoard({ initialJobs }: Readonly<JobBoardProps>) {
     }
   };
 
-  const activeJob = activeJobId ? jobs.find((job) => job.id === activeJobId) : null;
+  const activeJob = activeJobId
+    ? jobs.find((job) => job.id === activeJobId)
+    : null;
   const activeJobStatusLabel =
     activeJob && isBoardColumnKey(activeJob.status)
       ? getStatusLabel(activeJob.status, locale)
@@ -1637,14 +1773,14 @@ export function JobBoard({ initialJobs }: Readonly<JobBoardProps>) {
 
   const handleLogout = async () => {
     try {
-      await apiFetch('/api/auth/logout', { method: 'POST' });
+      await apiFetch("/api/auth/logout", { method: "POST" });
     } catch (error) {
       console.error(error);
     } finally {
       clearAuthToken();
       setCurrentUser(null);
       setJobs([]);
-      router.replace('/login');
+      router.replace("/login");
     }
   };
 
@@ -1660,16 +1796,20 @@ export function JobBoard({ initialJobs }: Readonly<JobBoardProps>) {
 
   return (
     <main className="mx-auto flex w-full max-w-7xl flex-col gap-5">
-      <header className="relative overflow-hidden rounded-2xl border border-white/60 bg-white/80 px-5 py-4 shadow-md ring-1 ring-slate-950/[0.03] backdrop-blur-sm">
-        <div className="pointer-events-none absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-sky-300/70 to-transparent" />
+      <header className="relative z-30 rounded-2xl border border-white/60 bg-white/80 px-5 py-4 shadow-md ring-1 ring-slate-950/[0.03] backdrop-blur-sm">
+        <div className="pointer-events-none absolute inset-x-6 top-0 h-px bg-gradient-to-r from-transparent via-sky-300/70 to-transparent" />
         <div className="flex flex-wrap items-start justify-between gap-4">
           <div className="flex items-center gap-3.5">
             <div className="flex size-11 items-center justify-center rounded-xl bg-gradient-to-br from-sky-500 to-cyan-500 text-white shadow-lg shadow-sky-500/30">
               <BriefcaseBusiness className="size-5" />
             </div>
             <div className="space-y-0.5">
-              <p className="text-[11px] font-semibold tracking-[0.22em] text-sky-600/80 uppercase">Apply Flow</p>
-              <h1 className="text-2xl font-semibold tracking-tight text-slate-900 sm:text-3xl">{copy.appTitle}</h1>
+              <p className="text-[11px] font-semibold tracking-[0.22em] text-sky-600/80 uppercase">
+                Apply Flow
+              </p>
+              <h1 className="text-2xl font-semibold tracking-tight text-slate-900 sm:text-3xl">
+                {copy.appTitle}
+              </h1>
             </div>
           </div>
           <div className="flex flex-wrap items-center gap-2.5">
@@ -1681,24 +1821,24 @@ export function JobBoard({ initialJobs }: Readonly<JobBoardProps>) {
             <div className="inline-flex items-center rounded-xl border border-slate-200 bg-slate-100/80 p-1">
               <button
                 type="button"
-                onClick={() => handleSwitchLocale('zh')}
+                onClick={() => handleSwitchLocale("zh")}
                 className={cn(
-                  'h-7 rounded-lg px-3 text-xs font-medium transition',
-                  locale === 'zh'
-                    ? 'bg-white text-slate-900 shadow-sm'
-                    : 'text-slate-500 hover:text-slate-700',
+                  "h-7 rounded-lg px-3 text-xs font-medium transition",
+                  locale === "zh"
+                    ? "bg-white text-slate-900 shadow-sm"
+                    : "text-slate-500 hover:text-slate-700",
                 )}
               >
                 中文
               </button>
               <button
                 type="button"
-                onClick={() => handleSwitchLocale('en')}
+                onClick={() => handleSwitchLocale("en")}
                 className={cn(
-                  'h-7 rounded-lg px-3 text-xs font-medium transition',
-                  locale === 'en'
-                    ? 'bg-white text-slate-900 shadow-sm'
-                    : 'text-slate-500 hover:text-slate-700',
+                  "h-7 rounded-lg px-3 text-xs font-medium transition",
+                  locale === "en"
+                    ? "bg-white text-slate-900 shadow-sm"
+                    : "text-slate-500 hover:text-slate-700",
                 )}
               >
                 EN
@@ -1738,13 +1878,19 @@ export function JobBoard({ initialJobs }: Readonly<JobBoardProps>) {
                           onClick={() =>
                             void handleBulkMarkRead(
                               filteredNotificationItems
-                                .filter((item) => item.state === 'UNREAD')
+                                .filter((item) => item.state === "UNREAD")
                                 .map((item) => item.jobId),
                             )
                           }
-                          disabled={!filteredNotificationItems.some((item) => item.state === 'UNREAD')}
+                          disabled={
+                            !filteredNotificationItems.some(
+                              (item) => item.state === "UNREAD",
+                            )
+                          }
                         >
-                          {notificationFilter === 'all' ? copy.markAllRead : copy.markFilteredRead}
+                          {notificationFilter === "all"
+                            ? copy.markAllRead
+                            : copy.markFilteredRead}
                         </Button>
                       </div>
                       <CardDescription className="text-xs text-slate-500">
@@ -1753,25 +1899,35 @@ export function JobBoard({ initialJobs }: Readonly<JobBoardProps>) {
                       <div className="flex flex-wrap gap-1.5 pt-1">
                         <Button
                           size="sm"
-                          variant={notificationFilter === 'all' ? 'default' : 'outline'}
+                          variant={
+                            notificationFilter === "all" ? "default" : "outline"
+                          }
                           className="h-7 text-[11px]"
-                          onClick={() => setNotificationFilter('all')}
+                          onClick={() => setNotificationFilter("all")}
                         >
                           {copy.filterAll}
                         </Button>
                         <Button
                           size="sm"
-                          variant={notificationFilter === 'unread' ? 'default' : 'outline'}
+                          variant={
+                            notificationFilter === "unread"
+                              ? "default"
+                              : "outline"
+                          }
                           className="h-7 text-[11px]"
-                          onClick={() => setNotificationFilter('unread')}
+                          onClick={() => setNotificationFilter("unread")}
                         >
                           {copy.filterUnread}
                         </Button>
                         <Button
                           size="sm"
-                          variant={notificationFilter === 'overdue' ? 'default' : 'outline'}
+                          variant={
+                            notificationFilter === "overdue"
+                              ? "default"
+                              : "outline"
+                          }
                           className="h-7 text-[11px]"
-                          onClick={() => setNotificationFilter('overdue')}
+                          onClick={() => setNotificationFilter("overdue")}
                         >
                           {copy.filterOverdue}
                         </Button>
@@ -1793,16 +1949,19 @@ export function JobBoard({ initialJobs }: Readonly<JobBoardProps>) {
                                 {reminder.company} · {reminder.position}
                               </p>
                               <p className="mt-0.5 text-[11px] text-slate-500">
-                                {reminder.reason === 'follow-up'
+                                {reminder.reason === "follow-up"
                                   ? copy.reminderDue
                                   : copy.reminderStaleApplied}
                               </p>
                             </div>
                             <div className="flex flex-wrap items-center gap-2">
-                              <Badge variant="secondary" className="bg-white text-slate-700">
-                                {reminder.state === 'READ'
+                              <Badge
+                                variant="secondary"
+                                className="bg-white text-slate-700"
+                              >
+                                {reminder.state === "READ"
                                   ? copy.stateRead
-                                  : reminder.state === 'IGNORED'
+                                  : reminder.state === "IGNORED"
                                     ? copy.stateIgnored
                                     : copy.stateUnread}
                               </Badge>
@@ -1810,7 +1969,12 @@ export function JobBoard({ initialJobs }: Readonly<JobBoardProps>) {
                                 size="sm"
                                 variant="outline"
                                 className="h-7 text-[11px]"
-                                onClick={() => void handleReminderAction(reminder.jobId, 'read')}
+                                onClick={() =>
+                                  void handleReminderAction(
+                                    reminder.jobId,
+                                    "read",
+                                  )
+                                }
                               >
                                 {copy.actionRead}
                               </Button>
@@ -1818,7 +1982,12 @@ export function JobBoard({ initialJobs }: Readonly<JobBoardProps>) {
                                 size="sm"
                                 variant="ghost"
                                 className="h-7 text-[11px] text-slate-500"
-                                onClick={() => void handleReminderAction(reminder.jobId, 'ignore')}
+                                onClick={() =>
+                                  void handleReminderAction(
+                                    reminder.jobId,
+                                    "ignore",
+                                  )
+                                }
                               >
                                 {copy.actionIgnore}
                               </Button>
@@ -1833,7 +2002,7 @@ export function JobBoard({ initialJobs }: Readonly<JobBoardProps>) {
             </div>
             <Button
               variant="outline"
-              onClick={() => router.push('/change-password')}
+              onClick={() => router.push("/change-password")}
               className="h-9 rounded-lg px-3 text-sm"
             >
               <KeyRound className="size-4" />
@@ -1861,13 +2030,19 @@ export function JobBoard({ initialJobs }: Readonly<JobBoardProps>) {
             >
               <CardContent className="flex items-start justify-between pt-4 pb-3.5">
                 <div>
-                  <p className="text-[11px] font-medium tracking-wide text-slate-500 uppercase">{metric.label}</p>
-                  <p className="mt-1.5 text-2xl font-semibold tracking-tight text-slate-900">{metric.value}</p>
-                  <p className="mt-1 text-[11px] text-slate-500">{metric.hint}</p>
+                  <p className="text-[11px] font-medium tracking-wide text-slate-500 uppercase">
+                    {metric.label}
+                  </p>
+                  <p className="mt-1.5 text-2xl font-semibold tracking-tight text-slate-900">
+                    {metric.value}
+                  </p>
+                  <p className="mt-1 text-[11px] text-slate-500">
+                    {metric.hint}
+                  </p>
                 </div>
                 <div
                   className={cn(
-                    'flex size-9 items-center justify-center rounded-xl bg-gradient-to-br text-white shadow-sm transition group-hover/metric:scale-105',
+                    "flex size-9 items-center justify-center rounded-xl bg-gradient-to-br text-white shadow-sm transition group-hover/metric:scale-105",
                     metric.tile,
                   )}
                 >
@@ -1908,7 +2083,10 @@ export function JobBoard({ initialJobs }: Readonly<JobBoardProps>) {
                       {interview.company} · {interview.position}
                     </p>
                   </div>
-                  <Badge variant="secondary" className="bg-sky-100 text-sky-700">
+                  <Badge
+                    variant="secondary"
+                    className="bg-sky-100 text-sky-700"
+                  >
                     {formatDateTime(interview.interviewAt)}
                   </Badge>
                 </div>
@@ -1925,7 +2103,9 @@ export function JobBoard({ initialJobs }: Readonly<JobBoardProps>) {
               </span>
               {copy.reminderTitle}
             </CardTitle>
-            <CardDescription className="text-xs text-slate-500">{copy.reminderHint}</CardDescription>
+            <CardDescription className="text-xs text-slate-500">
+              {copy.reminderHint}
+            </CardDescription>
           </CardHeader>
           <CardContent className="space-y-2">
             {pendingReminderItems.length === 0 ? (
@@ -1937,10 +2117,10 @@ export function JobBoard({ initialJobs }: Readonly<JobBoardProps>) {
                 <div
                   key={`${reminder.jobId}-${reminder.reason}`}
                   className={cn(
-                    'rounded-lg border px-3 py-2.5',
-                    reminder.level === 'overdue'
-                      ? 'border-red-200 bg-red-50/70'
-                      : 'border-amber-200 bg-amber-50/70',
+                    "rounded-lg border px-3 py-2.5",
+                    reminder.level === "overdue"
+                      ? "border-red-200 bg-red-50/70"
+                      : "border-amber-200 bg-amber-50/70",
                   )}
                 >
                   <div className="flex items-start justify-between gap-3">
@@ -1949,30 +2129,38 @@ export function JobBoard({ initialJobs }: Readonly<JobBoardProps>) {
                         {reminder.company} · {reminder.position}
                       </p>
                       <p className="mt-0.5 text-[11px] text-slate-500">
-                        {reminder.reason === 'follow-up' ? copy.reminderDue : copy.reminderStaleApplied}
+                        {reminder.reason === "follow-up"
+                          ? copy.reminderDue
+                          : copy.reminderStaleApplied}
                       </p>
                     </div>
                     <Badge
                       variant="secondary"
                       className={cn(
-                        'h-6',
-                        reminder.level === 'overdue'
-                          ? 'bg-red-100 text-red-700'
-                          : 'bg-amber-100 text-amber-700',
+                        "h-6",
+                        reminder.level === "overdue"
+                          ? "bg-red-100 text-red-700"
+                          : "bg-amber-100 text-amber-700",
                       )}
                     >
-                      {reminder.level === 'overdue' ? copy.reminderOverdue : copy.reminderUpcoming}
+                      {reminder.level === "overdue"
+                        ? copy.reminderOverdue
+                        : copy.reminderUpcoming}
                     </Badge>
                   </div>
 
                   <div className="mt-2 flex flex-wrap items-center gap-2">
-                    <Badge variant="secondary" className="bg-white text-amber-700">
+                    <Badge
+                      variant="secondary"
+                      className="bg-white text-amber-700"
+                    >
                       <ClockAlert className="mr-1 size-3.5" />
-                      {reminder.reason === 'follow-up'
+                      {reminder.reason === "follow-up"
                         ? formatDateTime(reminder.dueAt.toISOString())
                         : formatReminderAge(
                             Math.floor(
-                              (nowTs - reminder.dueAt.getTime()) / (24 * 60 * 60 * 1000),
+                              (nowTs - reminder.dueAt.getTime()) /
+                                (24 * 60 * 60 * 1000),
                             ),
                           )}
                     </Badge>
@@ -1980,7 +2168,9 @@ export function JobBoard({ initialJobs }: Readonly<JobBoardProps>) {
                       size="sm"
                       variant="outline"
                       className="h-7 text-[11px]"
-                      onClick={() => void handleReminderAction(reminder.jobId, 'read')}
+                      onClick={() =>
+                        void handleReminderAction(reminder.jobId, "read")
+                      }
                     >
                       {copy.actionRead}
                     </Button>
@@ -1988,7 +2178,13 @@ export function JobBoard({ initialJobs }: Readonly<JobBoardProps>) {
                       size="sm"
                       variant="outline"
                       className="h-7 text-[11px]"
-                      onClick={() => void handleReminderAction(reminder.jobId, 'snooze', new Date(nowTs + 24 * 60 * 60 * 1000).toISOString())}
+                      onClick={() =>
+                        void handleReminderAction(
+                          reminder.jobId,
+                          "snooze",
+                          new Date(nowTs + 24 * 60 * 60 * 1000).toISOString(),
+                        )
+                      }
                     >
                       {copy.actionSnooze1d}
                     </Button>
@@ -1996,7 +2192,15 @@ export function JobBoard({ initialJobs }: Readonly<JobBoardProps>) {
                       size="sm"
                       variant="outline"
                       className="h-7 text-[11px]"
-                      onClick={() => void handleReminderAction(reminder.jobId, 'snooze', new Date(nowTs + 3 * 24 * 60 * 60 * 1000).toISOString())}
+                      onClick={() =>
+                        void handleReminderAction(
+                          reminder.jobId,
+                          "snooze",
+                          new Date(
+                            nowTs + 3 * 24 * 60 * 60 * 1000,
+                          ).toISOString(),
+                        )
+                      }
                     >
                       {copy.actionSnooze3d}
                     </Button>
@@ -2004,7 +2208,13 @@ export function JobBoard({ initialJobs }: Readonly<JobBoardProps>) {
                       size="sm"
                       variant="outline"
                       className="h-7 text-[11px]"
-                      onClick={() => void handleReminderAction(reminder.jobId, 'snooze', getWeekendSnoozeIso())}
+                      onClick={() =>
+                        void handleReminderAction(
+                          reminder.jobId,
+                          "snooze",
+                          getWeekendSnoozeIso(),
+                        )
+                      }
                     >
                       {copy.actionSnoozeWeekend}
                     </Button>
@@ -2012,7 +2222,9 @@ export function JobBoard({ initialJobs }: Readonly<JobBoardProps>) {
                       size="sm"
                       variant="ghost"
                       className="h-7 text-[11px] text-slate-500"
-                      onClick={() => void handleReminderAction(reminder.jobId, 'ignore')}
+                      onClick={() =>
+                        void handleReminderAction(reminder.jobId, "ignore")
+                      }
                     >
                       {copy.actionIgnore}
                     </Button>
@@ -2039,7 +2251,9 @@ export function JobBoard({ initialJobs }: Readonly<JobBoardProps>) {
               <X className="size-4" />
             </button>
             <AlertTitle className="text-sm">{copy.requestFailed}</AlertTitle>
-            <AlertDescription className="text-sm">{errorMessage}</AlertDescription>
+            <AlertDescription className="text-sm">
+              {errorMessage}
+            </AlertDescription>
           </Alert>
         </div>
       ) : null}
@@ -2058,7 +2272,9 @@ export function JobBoard({ initialJobs }: Readonly<JobBoardProps>) {
           />
           <aside className="absolute top-0 right-0 flex h-full w-full max-w-xl flex-col border-l border-slate-200 bg-slate-50 p-4 shadow-2xl">
             <div className="mb-3 flex shrink-0 items-center justify-between">
-              <p className="text-sm font-semibold text-slate-800">{copy.createNewJob}</p>
+              <p className="text-sm font-semibold text-slate-800">
+                {copy.createNewJob}
+              </p>
               <Button
                 variant="ghost"
                 size="icon-sm"
@@ -2072,7 +2288,11 @@ export function JobBoard({ initialJobs }: Readonly<JobBoardProps>) {
               </Button>
             </div>
             <div className="min-h-0 flex-1 overflow-y-auto pr-1">
-              <JobForm onSubmit={handleCreateJob} isSubmitting={isCreating} locale={locale} />
+              <JobForm
+                onSubmit={handleCreateJob}
+                isSubmitting={isCreating}
+                locale={locale}
+              />
             </div>
           </aside>
         </div>
@@ -2092,7 +2312,9 @@ export function JobBoard({ initialJobs }: Readonly<JobBoardProps>) {
           />
           <aside className="absolute top-0 right-0 h-full w-full max-w-md border-l border-slate-200 bg-slate-50 p-4 shadow-2xl">
             <div className="mb-4 flex items-center justify-between">
-              <p className="text-sm font-semibold text-slate-800">{copy.editTimelineTitle}</p>
+              <p className="text-sm font-semibold text-slate-800">
+                {copy.editTimelineTitle}
+              </p>
               <Button
                 variant="ghost"
                 size="icon-sm"
@@ -2118,7 +2340,9 @@ export function JobBoard({ initialJobs }: Readonly<JobBoardProps>) {
                   id="timeline-interview-at"
                   type="datetime-local"
                   value={timelineInterviewAt}
-                  onChange={(event) => setTimelineInterviewAt(event.target.value)}
+                  onChange={(event) =>
+                    setTimelineInterviewAt(event.target.value)
+                  }
                   className="h-10 border-slate-200 bg-white"
                 />
               </div>
@@ -2134,7 +2358,9 @@ export function JobBoard({ initialJobs }: Readonly<JobBoardProps>) {
                   id="timeline-follow-up-at"
                   type="datetime-local"
                   value={timelineFollowUpAt}
-                  onChange={(event) => setTimelineFollowUpAt(event.target.value)}
+                  onChange={(event) =>
+                    setTimelineFollowUpAt(event.target.value)
+                  }
                   className="h-10 border-slate-200 bg-white"
                 />
               </div>
@@ -2169,7 +2395,9 @@ export function JobBoard({ initialJobs }: Readonly<JobBoardProps>) {
               updatingResumeIds={updatingResumeIds}
               onAnalyze={(jobId) => void handleAnalyze(jobId)}
               onEditTimeline={(job) => handleOpenTimelineEditor(job)}
-              onUpdateResume={(jobId, file) => void handleUpdateResume(jobId, file)}
+              onUpdateResume={(jobId, file) =>
+                void handleUpdateResume(jobId, file)
+              }
               formatCreatedAt={formatCreatedAt}
               formatDateTime={formatDateTime}
             />
