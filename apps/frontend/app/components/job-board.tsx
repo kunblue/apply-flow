@@ -1006,24 +1006,10 @@ function BoardColumn({
 
 export function JobBoard({ initialJobs }: Readonly<JobBoardProps>) {
   const router = useRouter();
-  const [locale, setLocale] = useState<Locale>(() => {
-    if (typeof globalThis === "undefined" || !("localStorage" in globalThis)) {
-      return "zh";
-    }
-
-    const savedLocale = globalThis.localStorage.getItem("apply-flow-locale");
-    if (savedLocale === "zh" || savedLocale === "en") {
-      return savedLocale;
-    }
-
-    if ("navigator" in globalThis) {
-      return globalThis.navigator.language.toLowerCase().startsWith("zh")
-        ? "zh"
-        : "en";
-    }
-
-    return "zh";
-  });
+  // Must match the server's deterministic default ("zh") on first render to
+  // avoid a hydration mismatch. The persisted/browser preference is applied
+  // after mount in the effect below.
+  const [locale, setLocale] = useState<Locale>("zh");
   const [jobs, setJobs] = useState<JobApplication[]>(initialJobs);
   const [isCreating, setIsCreating] = useState(false);
   const [isFormOpen, setIsFormOpen] = useState(false);
@@ -1092,6 +1078,22 @@ export function JobBoard({ initialJobs }: Readonly<JobBoardProps>) {
       );
       analyzeTimerRef.current = {};
     };
+  }, []);
+
+  // Apply the persisted or browser-preferred locale after hydration, so the
+  // first client render still matches the server-rendered HTML.
+  useEffect(() => {
+    const savedLocale = globalThis.localStorage.getItem("apply-flow-locale");
+    if (savedLocale === "zh" || savedLocale === "en") {
+      setLocale(savedLocale);
+      return;
+    }
+
+    if (typeof navigator !== "undefined") {
+      setLocale(
+        navigator.language.toLowerCase().startsWith("zh") ? "zh" : "en",
+      );
+    }
   }, []);
 
   useEffect(() => {
