@@ -46,11 +46,25 @@
   --radius-2xl: calc(var(--radius) * 1.8);
   --radius-3xl: calc(var(--radius) * 2.2);
   --radius-4xl: calc(var(--radius) * 2.6);
+
+  /* Soft, layered, slate-tinted elevation system (replaces flat defaults) */
+  --shadow-2xs: 0 1px 2px rgba(15, 23, 42, 0.04);
+  --shadow-xs: 0 1px 2px rgba(15, 23, 42, 0.05);
+  --shadow-sm: 0 1px 2px rgba(15, 23, 42, 0.04), 0 2px 6px rgba(15, 23, 42, 0.05);
+  --shadow:
+    0 1px 2px rgba(15, 23, 42, 0.05), 0 4px 10px -2px rgba(15, 23, 42, 0.07);
+  --shadow-md:
+    0 2px 4px rgba(15, 23, 42, 0.04), 0 8px 20px -6px rgba(15, 23, 42, 0.1);
+  --shadow-lg:
+    0 4px 10px -3px rgba(15, 23, 42, 0.07), 0 16px 32px -8px rgba(15, 23, 42, 0.12);
+  --shadow-xl:
+    0 8px 18px -6px rgba(15, 23, 42, 0.08), 0 28px 56px -14px rgba(15, 23, 42, 0.2);
+  --shadow-2xl: 0 32px 72px -16px rgba(15, 23, 42, 0.3);
 }
 
 :root {
   /* Slate + Sky theme inspired by Linear and Vercel */
-  --background: #f8fafc;
+  --background: #f6f8fc;
   --foreground: #0f172a;
   --card: #ffffff;
   --card-foreground: #0f172a;
@@ -65,15 +79,15 @@
   --accent: #e0f2fe;
   --accent-foreground: #0c4a6e;
   --destructive: #ef4444;
-  --border: #e2e8f0;
-  --input: #e2e8f0;
-  --ring: #0ea5e9;
+  --border: #e6ebf2;
+  --input: #dfe6ef;
+  --ring: #38bdf8;
   --chart-1: #0284c7;
   --chart-2: #0891b2;
   --chart-3: #2563eb;
   --chart-4: #0f172a;
   --chart-5: #475569;
-  --radius: 0.625rem;
+  --radius: 0.7rem;
   --sidebar: oklch(0.985 0 0);
   --sidebar-foreground: oklch(0.145 0 0);
   --sidebar-primary: oklch(0.205 0 0);
@@ -124,8 +138,41 @@
   }
   body {
     @apply bg-background text-foreground antialiased;
+    /* Subtle light "mesh" backdrop shared by every page */
+    background-image:
+      radial-gradient(60rem 40rem at 12% -10%, rgba(56, 189, 248, 0.12), transparent 60%),
+      radial-gradient(50rem 40rem at 100% 0%, rgba(99, 102, 241, 0.1), transparent 55%),
+      radial-gradient(45rem 40rem at 50% 120%, rgba(14, 165, 233, 0.08), transparent 60%);
+    background-attachment: fixed;
   }
   html {
     @apply font-sans;
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
   }
+}
+
+/* Gradient text for hero headings / brand */
+@utility text-gradient {
+  background-image: linear-gradient(120deg, #0f172a 0%, #0369a1 55%, #0ea5e9 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+/* Frosted surface for floating panels */
+@utility glass {
+  background-color: color-mix(in srgb, #ffffff 80%, transparent);
+  backdrop-filter: blur(12px) saturate(140%);
+}
+
+/* Gentle rise-on-hover for interactive cards */
+@utility lift {
+  transition:
+    transform 0.2s ease,
+    box-shadow 0.2s ease,
+    border-color 0.2s ease;
+}
+.lift:hover {
+  transform: translateY(-2px);
 }

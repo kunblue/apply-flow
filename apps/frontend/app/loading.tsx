@@ -6,8 +6,7 @@ const METRIC_SKELETON_IDS = ['m1', 'm2', 'm3', 'm4'];
 
 export default function Loading() {
   return (
-    <div className="relative min-h-screen overflow-hidden bg-slate-50 px-5 py-6 text-slate-900">
-      <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_15%_20%,rgba(125,211,252,0.18),transparent_38%),radial-gradient(circle_at_85%_10%,rgba(147,197,253,0.12),transparent_32%)]" />
+    <div className="relative min-h-screen overflow-hidden px-5 py-6 text-slate-900">
       <main className="mx-auto flex w-full max-w-7xl flex-col gap-5">
         <section className="grid gap-4 xl:grid-cols-12">
           <div className="xl:col-span-7 space-y-4">

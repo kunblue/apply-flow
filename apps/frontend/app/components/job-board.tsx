@@ -315,6 +315,49 @@ const EMPTY_STATE_ICON_BY_COLUMN: Record<BoardColumnKey, LucideIcon> = {
   OFFER: Trophy,
 };
 
+type ColumnAccent = {
+  dot: string;
+  badge: string;
+  tile: string;
+  bar: string;
+  soft: string;
+};
+
+const COLUMN_ACCENT: Record<BoardColumnKey, ColumnAccent> = {
+  APPLIED: {
+    dot: 'bg-sky-500',
+    badge: 'bg-sky-50 text-sky-700 ring-1 ring-inset ring-sky-200/70',
+    tile: 'from-sky-500 to-cyan-500',
+    bar: 'from-sky-400 via-sky-500 to-cyan-400',
+    soft: 'bg-sky-50/60',
+  },
+  INTERVIEW: {
+    dot: 'bg-violet-500',
+    badge: 'bg-violet-50 text-violet-700 ring-1 ring-inset ring-violet-200/70',
+    tile: 'from-violet-500 to-fuchsia-500',
+    bar: 'from-violet-400 via-violet-500 to-fuchsia-400',
+    soft: 'bg-violet-50/60',
+  },
+  REJECTED: {
+    dot: 'bg-rose-400',
+    badge: 'bg-rose-50 text-rose-600 ring-1 ring-inset ring-rose-200/70',
+    tile: 'from-rose-400 to-orange-400',
+    bar: 'from-rose-300 via-rose-400 to-orange-300',
+    soft: 'bg-rose-50/50',
+  },
+  OFFER: {
+    dot: 'bg-emerald-500',
+    badge: 'bg-emerald-50 text-emerald-700 ring-1 ring-inset ring-emerald-200/70',
+    tile: 'from-emerald-500 to-teal-500',
+    bar: 'from-emerald-400 via-emerald-500 to-teal-400',
+    soft: 'bg-emerald-50/60',
+  },
+};
+
+function accentForStatus(status: ApplicationStatus): ColumnAccent {
+  return COLUMN_ACCENT[status as BoardColumnKey] ?? COLUMN_ACCENT.APPLIED;
+}
+
 type JobBoardProps = {
   initialJobs: JobApplication[];
 };
@@ -340,6 +383,7 @@ type DashboardMetric = {
   value: string;
   hint: string;
   icon: LucideIcon;
+  tile: string;
 };
 
 const BOARD_COLUMN_KEYS = new Set(BOARD_COLUMNS.map((column) => column.key));
@@ -448,6 +492,7 @@ function JobCard({
   const [isAiModalOpen, setIsAiModalOpen] = useState(false);
   const [isDetailsModalOpen, setIsDetailsModalOpen] = useState(false);
   const structuredFeedback = parseAiFeedback(job.aiFeedback);
+  const accent = accentForStatus(job.status);
   const copy = LOCALE_COPY[locale];
   let aiFeedbackPreviewNode: ReactNode = null;
   let aiFeedbackFullNode: ReactNode = null;
@@ -514,26 +559,31 @@ function JobCard({
     <Card
       ref={dragRef}
       style={style}
-      className="gap-0 rounded-xl border-slate-200/80 bg-white shadow-none transition hover:border-slate-300"
+      className="lift gap-0 rounded-2xl bg-white shadow-sm hover:shadow-lg"
       {...(dragAttributes ?? {})}
       {...(dragListeners ?? {})}
     >
       <CardHeader className="pb-3">
         <div className="flex items-center gap-3">
           {/* Placeholder for company logo; can be replaced with real logos later. */}
-          <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-slate-100 text-sm font-semibold text-slate-600">
-            {job.company.slice(0, 1)}
+          <div
+            className={cn(
+              'flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br text-base font-semibold text-white shadow-sm',
+              accent.tile,
+            )}
+          >
+            {job.company.slice(0, 1).toUpperCase()}
           </div>
-          <div className="space-y-0.5">
-            <CardTitle className="text-sm font-semibold text-slate-900">{job.company}</CardTitle>
-            <CardDescription className="text-sm text-slate-600">{job.position}</CardDescription>
+          <div className="min-w-0 space-y-0.5">
+            <CardTitle className="truncate text-sm font-semibold text-slate-900">{job.company}</CardTitle>
+            <CardDescription className="truncate text-sm text-slate-600">{job.position}</CardDescription>
           </div>
         </div>
       </CardHeader>
 
       <CardContent className="pb-3">
         <div className="space-y-2.5">
-          <Badge variant="secondary" className="w-fit rounded-md bg-sky-50 text-sky-700">
+          <Badge variant="secondary" className={cn('w-fit rounded-full px-2.5', accent.badge)}>
             {statusLabel}
           </Badge>
           <div className="grid grid-cols-2 gap-2">
@@ -554,7 +604,7 @@ function JobCard({
               type="button"
               size="sm"
               onClick={() => setIsDetailsModalOpen(true)}
-              className="h-8 w-full justify-center rounded-md bg-slate-900 px-2.5 text-xs text-white hover:bg-slate-800"
+              className="h-8 w-full justify-center rounded-lg bg-slate-900 px-2.5 text-xs text-white hover:bg-slate-800"
             >
               {copy.viewDetails}
             </Button>
@@ -563,7 +613,7 @@ function JobCard({
               size="sm"
               onClick={() => onAnalyze(job.id)}
               disabled={isAnalyzing}
-              className="h-8 w-full justify-center rounded-md bg-sky-600 px-3 text-xs text-white hover:bg-sky-500"
+              className="h-8 w-full justify-center rounded-lg bg-gradient-to-b from-sky-500 to-sky-600 px-3 text-xs text-white shadow-sm shadow-sky-500/25 hover:from-sky-400 hover:to-sky-500"
             >
               <Sparkles className="size-3.5" />
               {isAnalyzing ? copy.analyzing : copy.aiAnalyze}
@@ -574,7 +624,7 @@ function JobCard({
               variant="outline"
               onClick={() => resumeInputRef.current?.click()}
               disabled={isUpdatingResume}
-              className="h-8 w-full justify-center rounded-md px-2.5 text-xs"
+              className="h-8 w-full justify-center rounded-lg px-2.5 text-xs"
             >
               {isUpdatingResume ? copy.updatingResume : copy.editResume}
             </Button>
@@ -583,7 +633,7 @@ function JobCard({
               size="sm"
               variant="outline"
               onClick={() => onEditTimeline(job)}
-              className="h-8 w-full justify-center rounded-md px-2.5 text-xs"
+              className="h-8 w-full justify-center rounded-lg px-2.5 text-xs"
             >
               {copy.editTimeline}
             </Button>
@@ -815,18 +865,23 @@ function BoardColumn({
     id: columnKey,
   });
   const EmptyStateIcon = EMPTY_STATE_ICON_BY_COLUMN[columnKey];
+  const accent = COLUMN_ACCENT[columnKey];
 
   return (
     <div
       ref={setNodeRef}
       className={cn(
-        'rounded-xl border border-slate-200/80 bg-white p-4 shadow-sm transition',
-        isOver && 'border-sky-300 ring-2 ring-sky-100',
+        'relative overflow-hidden rounded-2xl border border-slate-200/70 bg-white/70 p-4 shadow-sm ring-1 ring-slate-950/[0.02] backdrop-blur-sm transition',
+        isOver && 'border-sky-300 shadow-md ring-2 ring-sky-200/60',
       )}
     >
-      <div className="mb-4 flex items-center justify-between">
-        <h2 className="text-sm font-semibold tracking-wide text-slate-700 uppercase">{columnLabel}</h2>
-        <span className="rounded-md bg-slate-100 px-2 py-1 text-xs font-medium text-slate-500">
+      <div className={cn('absolute inset-x-0 top-0 h-1 bg-gradient-to-r', accent.bar)} />
+      <div className="mb-4 mt-1 flex items-center justify-between">
+        <h2 className="flex items-center gap-2 text-xs font-semibold tracking-wider text-slate-600 uppercase">
+          <span className={cn('size-2 rounded-full', accent.dot)} />
+          {columnLabel}
+        </h2>
+        <span className="inline-flex h-6 min-w-6 items-center justify-center rounded-full bg-slate-100 px-2 text-xs font-semibold text-slate-600">
           {jobs.length}
         </span>
       </div>
@@ -1053,6 +1108,7 @@ export function JobBoard({ initialJobs }: Readonly<JobBoardProps>) {
         value: String(totalCount),
         hint: copy.totalJobsHint,
         icon: BriefcaseBusiness,
+        tile: 'from-sky-500 to-cyan-500',
       },
       {
         key: 'interview',
@@ -1060,6 +1116,7 @@ export function JobBoard({ initialJobs }: Readonly<JobBoardProps>) {
         value: String(interviewCount),
         hint: copy.inInterviewHint,
         icon: Activity,
+        tile: 'from-violet-500 to-fuchsia-500',
       },
       {
         key: 'offer-rate',
@@ -1067,6 +1124,7 @@ export function JobBoard({ initialJobs }: Readonly<JobBoardProps>) {
         value: offerRate,
         hint: copy.offerRateHint,
         icon: TrendingUp,
+        tile: 'from-emerald-500 to-teal-500',
       },
       {
         key: 'momentum',
@@ -1074,6 +1132,7 @@ export function JobBoard({ initialJobs }: Readonly<JobBoardProps>) {
         value: jobsByStatus.APPLIED.length >= 3 ? copy.momentumStrong : copy.momentumRampUp,
         hint: copy.momentumHint,
         icon: Rocket,
+        tile: 'from-amber-500 to-orange-500',
       },
     ];
   }, [copy, jobs, jobsByStatus]);
@@ -1600,16 +1659,22 @@ export function JobBoard({ initialJobs }: Readonly<JobBoardProps>) {
   }
 
   return (
-    <main className="mx-auto flex w-full max-w-7xl flex-col gap-4">
-      <header className="relative rounded-2xl border border-slate-200/70 bg-white px-5 py-4 shadow-sm">
-        <div className="flex items-start justify-between gap-4">
-          <div className="space-y-1.5">
-            <p className="text-[11px] font-semibold tracking-[0.22em] text-slate-500 uppercase">Apply Flow</p>
-            <h1 className="text-3xl font-semibold tracking-tight text-slate-900">{copy.appTitle}</h1>
+    <main className="mx-auto flex w-full max-w-7xl flex-col gap-5">
+      <header className="relative overflow-hidden rounded-2xl border border-white/60 bg-white/80 px-5 py-4 shadow-md ring-1 ring-slate-950/[0.03] backdrop-blur-sm">
+        <div className="pointer-events-none absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-sky-300/70 to-transparent" />
+        <div className="flex flex-wrap items-start justify-between gap-4">
+          <div className="flex items-center gap-3.5">
+            <div className="flex size-11 items-center justify-center rounded-xl bg-gradient-to-br from-sky-500 to-cyan-500 text-white shadow-lg shadow-sky-500/30">
+              <BriefcaseBusiness className="size-5" />
+            </div>
+            <div className="space-y-0.5">
+              <p className="text-[11px] font-semibold tracking-[0.22em] text-sky-600/80 uppercase">Apply Flow</p>
+              <h1 className="text-2xl font-semibold tracking-tight text-slate-900 sm:text-3xl">{copy.appTitle}</h1>
+            </div>
           </div>
-          <div className="flex items-center gap-3">
+          <div className="flex flex-wrap items-center gap-2.5">
             {currentUser ? (
-              <span className="hidden rounded-md bg-slate-100 px-2.5 py-1 text-xs text-slate-600 sm:inline">
+              <span className="hidden items-center rounded-lg bg-slate-100/80 px-2.5 py-1.5 text-xs font-medium text-slate-600 ring-1 ring-slate-200/70 sm:inline-flex">
                 {currentUser.email}
               </span>
             ) : null}
@@ -1639,7 +1704,10 @@ export function JobBoard({ initialJobs }: Readonly<JobBoardProps>) {
                 EN
               </button>
             </div>
-            <Button onClick={() => setIsFormOpen(true)} className="h-9 rounded-lg px-4 text-sm">
+            <Button
+              onClick={() => setIsFormOpen(true)}
+              className="h-9 rounded-lg bg-gradient-to-b from-sky-500 to-sky-600 px-4 text-sm text-white shadow-md shadow-sky-500/25 transition hover:from-sky-400 hover:to-sky-500"
+            >
               <Plus className="size-4" />
               {copy.addJob}
             </Button>
@@ -1789,16 +1857,21 @@ export function JobBoard({ initialJobs }: Readonly<JobBoardProps>) {
           return (
             <Card
               key={metric.key}
-              className="gap-0 rounded-xl border-slate-200/80 bg-white/95 shadow-sm transition hover:-translate-y-0.5 hover:shadow-md"
+              className="lift group/metric gap-0 rounded-2xl bg-white/95 hover:shadow-lg"
             >
-              <CardContent className="flex items-start justify-between pt-3.5 pb-3">
+              <CardContent className="flex items-start justify-between pt-4 pb-3.5">
                 <div>
                   <p className="text-[11px] font-medium tracking-wide text-slate-500 uppercase">{metric.label}</p>
-                  <p className="mt-1.5 text-xl font-semibold tracking-tight text-slate-900">{metric.value}</p>
+                  <p className="mt-1.5 text-2xl font-semibold tracking-tight text-slate-900">{metric.value}</p>
                   <p className="mt-1 text-[11px] text-slate-500">{metric.hint}</p>
                 </div>
-                <div className="rounded-lg bg-slate-100 p-2 text-slate-600">
-                  <MetricIcon className="size-4" />
+                <div
+                  className={cn(
+                    'flex size-9 items-center justify-center rounded-xl bg-gradient-to-br text-white shadow-sm transition group-hover/metric:scale-105',
+                    metric.tile,
+                  )}
+                >
+                  <MetricIcon className="size-4.5" />
                 </div>
               </CardContent>
             </Card>
@@ -1807,10 +1880,12 @@ export function JobBoard({ initialJobs }: Readonly<JobBoardProps>) {
       </section>
 
       <section className="grid gap-4 lg:grid-cols-2">
-        <Card className="rounded-xl border-slate-200/80 bg-white shadow-sm">
+        <Card className="rounded-2xl bg-white">
           <CardHeader className="pb-2">
             <CardTitle className="flex items-center gap-2 text-sm font-semibold text-slate-900">
-              <CalendarClock className="size-4 text-sky-600" />
+              <span className="flex size-7 items-center justify-center rounded-lg bg-sky-100 text-sky-600">
+                <CalendarClock className="size-4" />
+              </span>
               {copy.interviewCalendarTitle}
             </CardTitle>
             <CardDescription className="text-xs text-slate-500">
@@ -1842,10 +1917,12 @@ export function JobBoard({ initialJobs }: Readonly<JobBoardProps>) {
           </CardContent>
         </Card>
 
-        <Card className="rounded-xl border-slate-200/80 bg-white shadow-sm">
+        <Card className="rounded-2xl bg-white">
           <CardHeader className="pb-2">
             <CardTitle className="flex items-center gap-2 text-sm font-semibold text-slate-900">
-              <BellRing className="size-4 text-amber-600" />
+              <span className="flex size-7 items-center justify-center rounded-lg bg-amber-100 text-amber-600">
+                <BellRing className="size-4" />
+              </span>
               {copy.reminderTitle}
             </CardTitle>
             <CardDescription className="text-xs text-slate-500">{copy.reminderHint}</CardDescription>

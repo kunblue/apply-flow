@@ -189,28 +189,29 @@ export default function RegisterPage() {
   };
 
   return (
-    <main className="relative flex min-h-screen items-center justify-center overflow-hidden bg-slate-950 px-4 py-8">
-      <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_12%_18%,rgba(14,165,233,0.35),transparent_34%),radial-gradient(circle_at_86%_12%,rgba(59,130,246,0.22),transparent_28%),radial-gradient(circle_at_48%_96%,rgba(56,189,248,0.2),transparent_36%)]" />
-      <div className="pointer-events-none absolute -top-24 -left-24 h-64 w-64 rounded-full bg-sky-400/20 blur-3xl" />
-      <div className="pointer-events-none absolute right-0 bottom-0 h-72 w-72 rounded-full bg-blue-500/20 blur-3xl" />
+    <main className="relative flex min-h-screen items-center justify-center overflow-hidden px-4 py-8">
+      <div className="pointer-events-none absolute -top-24 -left-24 h-72 w-72 rounded-full bg-sky-300/30 blur-3xl" />
+      <div className="pointer-events-none absolute right-0 bottom-0 h-80 w-80 rounded-full bg-indigo-300/25 blur-3xl" />
 
-      <div className="relative z-10 grid w-full max-w-5xl overflow-hidden rounded-3xl border border-white/15 bg-slate-900/60 shadow-[0_30px_80px_rgba(2,6,23,0.65)] backdrop-blur-xl lg:grid-cols-[1.1fr_1fr]">
-        <section className="hidden flex-col justify-between border-r border-white/10 bg-linear-to-br from-sky-500/15 via-slate-900/10 to-blue-500/20 p-10 text-slate-100 lg:flex">
-          <div className="inline-flex w-fit items-center gap-2 rounded-full border border-white/20 bg-white/10 px-3 py-1 text-xs tracking-wide uppercase">
+      <div className="relative z-10 grid w-full max-w-5xl overflow-hidden rounded-3xl border border-white/70 bg-white/70 shadow-2xl ring-1 ring-slate-950/[0.04] backdrop-blur-xl lg:grid-cols-[1.1fr_1fr]">
+        <section className="relative hidden flex-col justify-between overflow-hidden bg-gradient-to-br from-sky-500 via-sky-600 to-indigo-600 p-10 text-white lg:flex">
+          <div className="pointer-events-none absolute -top-16 -right-10 h-56 w-56 rounded-full bg-white/15 blur-3xl" />
+          <div className="pointer-events-none absolute -bottom-16 -left-10 h-56 w-56 rounded-full bg-cyan-300/25 blur-3xl" />
+          <div className="relative inline-flex w-fit items-center gap-2 rounded-full border border-white/25 bg-white/15 px-3 py-1 text-xs tracking-wide uppercase backdrop-blur-sm">
             <Sparkles className="size-3.5" />
             Apply Flow
           </div>
-          <div className="space-y-5">
+          <div className="relative space-y-5">
             <h1 className="text-4xl leading-tight font-semibold">{copy.heroTitle}</h1>
-            <p className="max-w-md text-sm leading-6 text-slate-200/80">{copy.heroDescription}</p>
+            <p className="max-w-md text-sm leading-6 text-white/85">{copy.heroDescription}</p>
           </div>
-          <div className="inline-flex w-fit items-center gap-2 rounded-xl border border-white/15 bg-white/8 px-3 py-2 text-xs text-slate-200/90">
+          <div className="relative inline-flex w-fit items-center gap-2 rounded-xl border border-white/25 bg-white/15 px-3 py-2 text-xs text-white/90 backdrop-blur-sm">
             <ShieldCheck className="size-3.5" />
             {copy.heroBadge}
           </div>
         </section>
 
-        <Card className="w-full rounded-none border-0 bg-white/95 shadow-none">
+        <Card className="w-full rounded-none border-0 bg-white/95 shadow-none ring-0">
           <CardHeader className="space-y-2 pb-2">
             <div className="flex items-center justify-between gap-2">
               <CardTitle className="text-2xl font-semibold text-slate-900">{copy.createAccount}</CardTitle>
@@ -335,7 +336,7 @@ export default function RegisterPage() {
               <Button
                 type="submit"
                 disabled={isSubmitting}
-                className="h-11 w-full bg-sky-600 text-white transition hover:bg-sky-500"
+                className="h-11 w-full bg-gradient-to-b from-sky-500 to-sky-600 text-white shadow-md shadow-sky-500/25 transition hover:from-sky-400 hover:to-sky-500"
               >
                 {isSubmitting ? copy.creatingAccount : copy.createAccount}
                 <ArrowRight className="size-4" />

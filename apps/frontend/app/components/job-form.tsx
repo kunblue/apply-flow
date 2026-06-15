@@ -75,7 +75,7 @@ export function JobForm({ onSubmit, isSubmitting, locale }: Readonly<JobFormProp
   };
 
   return (
-    <Card className="gap-0 rounded-xl border-slate-200/80 bg-white shadow-sm">
+    <Card className="gap-0 rounded-2xl bg-white">
       <CardHeader className="gap-1 border-b border-slate-100">
         <CardTitle className="text-base font-semibold text-slate-900">{copy.title}</CardTitle>
         <CardDescription className="text-sm text-slate-500">{copy.description}</CardDescription>
@@ -174,7 +174,11 @@ export function JobForm({ onSubmit, isSubmitting, locale }: Readonly<JobFormProp
           </div>
 
           <div className="lg:col-span-3">
-            <Button type="submit" disabled={isSubmitting} className="h-10 px-5 text-sm">
+            <Button
+              type="submit"
+              disabled={isSubmitting}
+              className="h-10 bg-gradient-to-b from-sky-500 to-sky-600 px-5 text-sm text-white shadow-md shadow-sky-500/25 transition hover:from-sky-400 hover:to-sky-500"
+            >
               {isSubmitting ? copy.submitLoading : copy.submitIdle}
             </Button>
           </div>

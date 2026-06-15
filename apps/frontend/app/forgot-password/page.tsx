@@ -151,13 +151,17 @@ export default function ForgotPasswordPage() {
   };
 
   return (
-    <main className="relative flex min-h-screen items-center justify-center overflow-hidden bg-slate-950 px-4 py-8">
-      <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_12%_18%,rgba(14,165,233,0.35),transparent_34%),radial-gradient(circle_at_86%_12%,rgba(59,130,246,0.22),transparent_28%),radial-gradient(circle_at_48%_96%,rgba(56,189,248,0.2),transparent_36%)]" />
-      <Card className="relative z-10 w-full max-w-md border border-white/15 bg-white/95 shadow-[0_30px_80px_rgba(2,6,23,0.45)]">
+    <main className="relative flex min-h-screen items-center justify-center overflow-hidden px-4 py-8">
+      <div className="pointer-events-none absolute -top-24 -left-24 h-72 w-72 rounded-full bg-sky-300/30 blur-3xl" />
+      <div className="pointer-events-none absolute right-0 bottom-0 h-80 w-80 rounded-full bg-indigo-300/25 blur-3xl" />
+      <Card className="relative z-10 w-full max-w-md overflow-hidden rounded-2xl border border-white/70 bg-white/90 shadow-xl ring-1 ring-slate-950/[0.04] backdrop-blur-xl">
+        <div className="pointer-events-none absolute inset-x-0 top-0 h-1 bg-gradient-to-r from-sky-400 via-sky-500 to-indigo-500" />
         <CardHeader className="space-y-2 pb-2">
           <div className="flex items-center justify-between gap-2">
             <CardTitle className="flex items-center gap-2 text-2xl font-semibold text-slate-900">
-              <KeyRound className="size-5 text-sky-700" />
+              <span className="flex size-9 items-center justify-center rounded-xl bg-gradient-to-br from-sky-500 to-indigo-500 text-white shadow-sm">
+                <KeyRound className="size-4.5" />
+              </span>
               {copy.title}
             </CardTitle>
             <div className="inline-flex items-center rounded-xl border border-slate-200 bg-slate-100/80 p-1">
@@ -262,7 +266,7 @@ export default function ForgotPasswordPage() {
             <Button
               type="submit"
               disabled={isSubmitting}
-              className="h-11 w-full bg-sky-600 text-white transition hover:bg-sky-500"
+              className="h-11 w-full bg-gradient-to-b from-sky-500 to-sky-600 text-white shadow-md shadow-sky-500/25 transition hover:from-sky-400 hover:to-sky-500"
             >
               {isSubmitting ? copy.resettingPassword : copy.resetPassword}
               <ArrowRight className="size-4" />
